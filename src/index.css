@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+.login-background {
+  background-color: #f8fbff;
+  background-image:
+    linear-gradient(142deg, transparent 0 62%, rgb(59 130 246 / 0.08) 62% 76%, transparent 76%),
+    linear-gradient(32deg, transparent 0 14%, rgb(147 197 253 / 0.14) 14% 28%, transparent 28%),
+    linear-gradient(118deg, #fff 0%, #f5f9ff 55%, #e8f1ff 100%);
+}
+
