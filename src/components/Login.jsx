@@ -67,7 +67,7 @@ export default function Login({ onLogin }) {
         </form>
 
         <footer className="mt-9 flex flex-wrap items-center justify-center gap-x-3 text-[13px] text-[#8998aa]">
-          <span>Escola Central</span><span aria-hidden="true">·</span><span>Ambiente demonstrativo</span>
+          <span>Escola Central</span><span aria-hidden="true">·</span><span>Ambiente educacional</span>
         </footer>
       </section>
     </main>
