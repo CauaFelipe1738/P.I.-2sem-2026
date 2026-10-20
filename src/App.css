@@ -1,0 +1,62 @@
+.drawer-layer {
+  animation: drawer-fade-in 160ms ease-out;
+}
+
+.drawer-backdrop {
+  border: 0;
+  background: rgb(22 35 51 / 20%);
+  cursor: default;
+}
+
+.app-drawer {
+  animation: drawer-slide-in 200ms ease-out;
+}
+
+.drawer-item {
+  color: #596a80;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.drawer-item:hover {
+  color: #1b5caa;
+  background: #f2f7fd;
+}
+
+.drawer-item-active,
+.drawer-item-active:hover {
+  color: #1760b5;
+  background: #e5f1ff;
+}
+
+.component-page {
+  min-height: 420px;
+}
+
+.component-page > h1 {
+  color: #10213a;
+}
+
+@keyframes drawer-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes drawer-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@media (min-width: 1024px) and (min-height: 700px) {
+  .dashboard-card { min-height: 440px; }
+}
+
+@media (max-width: 640px) {
+  .app-content { padding-top: 8px; }
+  .component-page { min-height: 60vh; padding: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-layer,
+  .app-drawer,
+  .drawer-item { animation: none; transition: none; }
+}
