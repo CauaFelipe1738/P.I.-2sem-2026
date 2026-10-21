@@ -28,6 +28,31 @@
   background: #e5f1ff;
 }
 
+.menu-trigger-icon {
+  width: 23px;
+  height: 23px;
+  object-fit: contain;
+}
+
+.drawer-nav-icon {
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  object-fit: contain;
+}
+
+.drawer-brand-icon {
+  width: 31px;
+  height: 31px;
+  object-fit: contain;
+}
+
+.dashboard-stat-icon {
+  width: 21px;
+  height: 21px;
+  object-fit: contain;
+}
+
 .component-page {
   min-height: 420px;
 }
@@ -47,7 +72,7 @@
 }
 
 @media (min-width: 1024px) and (min-height: 700px) {
-  .dashboard-card { min-height: 440px; }
+  .dashboard-card { min-height: 440px; padding: 20px; }
 }
 
 @media (max-width: 640px) {
