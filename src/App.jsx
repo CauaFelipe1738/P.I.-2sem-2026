@@ -11,6 +11,7 @@ import alunosIcon from './assets/alunos menu.png'
 import desempenhoIcon from './assets/desempenho.png'
 import relatorioIcon from './assets/relatorio.png'
 import frequenciaIcon from './assets/frequencia.png'
+import aprenderIcon from './assets/aprender.png'
 import alunosResumoIcon from './assets/alunos vg.png'
 import calendarioIcon from './assets/calendario.png'
 import registrosIcon from './assets/registros.png'
@@ -22,7 +23,7 @@ const paginas = [
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
   { id: 'relatorio', nome: 'Relatórios', icone: relatorioIcon, Componente: Relatorio },
   { id: 'frequencia', nome: 'Frequência', icone: frequenciaIcon, Componente: Frequencia },
-  { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprendizagemIcon, Componente: Aprendizagem },
+  { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
 ]
 
 const dimensoesIniciais = [
@@ -106,7 +107,7 @@ function App() {
         <button className="drawer-backdrop absolute inset-0 h-full w-full" aria-label="Fechar menu" onClick={() => setMenuAberto(false)} />
         <aside className="app-drawer absolute inset-y-0 left-0 flex w-[292px] max-w-[86vw] flex-col bg-white px-[14px] pb-4 pt-7 shadow-2xl" aria-label="Menu principal">
           <div className="flex items-center gap-3 px-2 pb-8">
-            <div className="brand-icon flex h-[54px] w-[54px] items-center justify-center rounded-2xl bg-[#eaf3ff] text-[#2875df]"><img src={aprendizagemIcon} alt="" className="drawer-brand-icon" /></div>
+            <div className="brand-icon flex h-[54px] w-[54px] items-center justify-center rounded-2xl bg-[#eaf3ff] text-[#2875df]"><img src={aprenderIcon} alt="" className="drawer-brand-icon" /></div>
             <div><p className="text-[20px] font-bold tracking-wide text-slate-800">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">Painel escolar</p></div>
             <button className="ml-auto self-start text-slate-400 md:hidden" onClick={() => setMenuAberto(false)} aria-label="Fechar menu">×</button>
           </div>
