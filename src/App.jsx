@@ -16,9 +16,6 @@ import calendarioIcon from './assets/calendario.png'
 import registrosIcon from './assets/registros.png'
 import './App.css'
 
-// O projeto não possui um ícone próprio para Aprendizagem; usa o ícone local da Visão geral.
-const aprendizagemIcon = visaoIcon
-
 const paginas = [
   { id: 'visao', nome: 'Visão geral', icone: visaoIcon },
   { id: 'alunos', nome: 'Alunos', icone: alunosIcon, Componente: Alunos },
