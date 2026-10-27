@@ -15,6 +15,9 @@ import aprenderIcon from './assets/aprender.png'
 import alunosResumoIcon from './assets/alunos vg.png'
 import calendarioIcon from './assets/calendario.png'
 import registrosIcon from './assets/registros.png'
+import alunoFoto from './assets/aluno.jpg'
+import professorFoto from './assets/professor.png'
+import coordenacaoFoto from './assets/diretor.jpg'
 import './App.css'
 
 const paginas = [
@@ -66,6 +69,7 @@ function Icon({ type, size = 20 }) {
 
 function App() {
   const [paginaAtual, setPaginaAtual] = useState('login')
+  const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [selecionadas, setSelecionadas] = useState(dimensoesIniciais.map(({ nome }) => nome))
   const [observacoes, setObservacoes] = useState(observacoesIniciais)
@@ -87,7 +91,40 @@ function App() {
   }
 
   if (paginaAtual === 'login') {
-    return <div className="min-h-screen bg-slate-100 text-slate-900"><Login onLogin={() => setPaginaAtual('visao')} /></div>
+    return <div className="min-h-screen bg-slate-100 text-slate-900"><Login onLogin={() => setPaginaAtual('perfil')} /></div>
+  }
+
+  if (paginaAtual === 'perfil') {
+    const perfis = [
+      { nome: 'Aluno', detalhe: 'Acompanhe seu percurso de aprendizagem.', imagem: alunoFoto },
+      { nome: 'Professor', detalhe: 'Registre observações e acompanhe suas turmas.', imagem: professorFoto },
+      { nome: 'Coordenação', detalhe: 'Consulte indicadores e informações da escola.', imagem: coordenacaoFoto },
+    ]
+
+    return (
+      <main className="login-background flex min-h-dvh items-center justify-center px-4 py-10 text-[#10233f]">
+        <section className="w-full max-w-[1060px]">
+          <div className="mb-9 text-center">
+            <p className="mb-2 text-sm font-bold text-[#1767d2]">Acesso ao painel</p>
+            <h1 className="text-3xl font-bold sm:text-[36px]">Como deseja continuar?</h1>
+            <p className="mt-2 text-[15px] text-[#71819a]">Escolha seu perfil para acessar o ambiente da escola.</p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {perfis.map(({ nome, detalhe, imagem }) => (
+              <button key={nome} onClick={() => { setPerfil(nome); setPaginaAtual('visao') }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
+                <img src={imagem} alt="" className="h-52 w-full object-cover object-center" />
+                <span className="block p-5">
+                  <span className="block text-xl font-bold text-[#10233f]">{nome}</span>
+                  <span className="mt-1.5 block min-h-10 text-sm leading-5 text-[#71819a]">{detalhe}</span>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1767d2]">Acessar <span aria-hidden="true">→</span></span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setPaginaAtual('login')} className="mx-auto mt-7 block text-sm font-semibold text-[#64758d] hover:text-[#1767d2]">Voltar ao login</button>
+        </section>
+      </main>
+    )
   }
 
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
@@ -113,7 +150,7 @@ function App() {
           </div>
           <p className="mb-2 px-3 text-[12px] font-medium uppercase tracking-[.08em] text-slate-400">Menu principal</p>
           <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }) => <button key={id} onClick={() => { setPaginaAtual(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}</button>)}</nav>
-          <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">AC</div><div><p className="text-sm font-semibold text-slate-800">Alex Chen</p><p className="mt-1 text-sm text-slate-500">Docente</p></div></div>
+          <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">{(perfil || 'AC').slice(0, 2).toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{perfil || 'Alex Chen'}</p><p className="mt-1 text-sm text-slate-500">Perfil selecionado</p></div></div>
         </aside>
       </div>}
 
