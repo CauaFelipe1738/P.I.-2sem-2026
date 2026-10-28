@@ -2,27 +2,41 @@ import { useState } from 'react'
 
 export default function Login({ onLogin }) {
   const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false)
 
   function handleSubmit(event) {
     event.preventDefault()
     onLogin?.()
   }
 
+  if (mostrarRecuperacao) {
+    return (
+      <main className="login-background flex min-h-dvh items-center justify-center px-4 py-8 text-[#10233f]">
+        <section className="w-full max-w-[475px] rounded-[20px] border border-[#d3e1f1] bg-white px-6 py-7 shadow-[0_22px_60px_rgba(31,54,82,0.11)] sm:px-[53px] sm:py-9">
+          <Brand />
+          <header className="mb-8 text-center">
+            <p className="mb-2 text-sm font-bold text-[#1767d2]">Recuperação de acesso</p>
+            <h1 className="text-[30px] font-bold leading-tight text-[#10233f]">Esqueceu a senha?</h1>
+            <p className="mt-2 text-[15px] leading-5 text-[#71819a]">Informe seu e-mail institucional para receber as instruções de recuperação.</p>
+          </header>
+          <form onSubmit={(event) => event.preventDefault()} className="space-y-5">
+            <div>
+              <label htmlFor="email-recuperacao" className="mb-1 block text-sm font-bold text-[#18304e]">E-mail institucional</label>
+              <input id="email-recuperacao" name="email-recuperacao" type="email" autoComplete="email" placeholder="voce@escola.edu.br" className="h-12 w-full rounded-lg border border-[#d2deeb] bg-white px-4 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
+            </div>
+            <button type="submit" className="flex h-12 w-full items-center justify-center rounded-lg bg-[#2875dc] text-[15px] font-bold text-white transition hover:bg-[#1e65c2] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">Enviar instruções</button>
+          </form>
+          <button type="button" onClick={() => setMostrarRecuperacao(false)} className="mx-auto mt-6 flex items-center gap-2 text-sm font-semibold text-[#1767d2] hover:underline"><span aria-hidden="true">←</span> Voltar ao login</button>
+          <Footer />
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="login-background flex min-h-dvh items-center justify-center px-4 py-3 text-[#10233f]">
       <section className="w-full max-w-[475px] rounded-[20px] border border-[#d3e1f1] bg-white px-6 py-5 shadow-[0_22px_60px_rgba(31,54,82,0.11)] sm:px-[53px] sm:py-6">
-        <div className="mb-10 flex items-center justify-center gap-3.5">
-          <div className="flex size-[53px] items-center justify-center rounded-2xl bg-[#e0edff] text-[#2474df]">
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-5">
-              <path d="m2.8 9.3 9.2-5 9.2 5-9.2 5-9.2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-              <path d="M6.5 11.5v4.2c3.4 2.8 7.6 2.8 11 0v-4.2M21.2 9.5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-[19px] font-bold leading-6 tracking-[0.02em] text-[#0c1b31]">EDULYTICS</p>
-            <p className="mt-0.5 text-sm text-[#71819a]">Painel escolar</p>
-          </div>
-        </div>
+        <Brand />
 
         <header className="mb-9 text-center">
           <p className="mb-2 text-sm font-bold text-[#1767d2]">Acesso ao painel</p>
@@ -55,7 +69,7 @@ export default function Login({ onLogin }) {
               <input type="checkbox" className="size-[17px] rounded border-[#aab8c8] accent-[#2876df]" />
               Lembrar meu e-mail
             </label>
-            <button type="button" className="text-[13px] font-medium text-[#1767d2] hover:underline">Esqueceu a senha?</button>
+            <button type="button" onClick={() => setMostrarRecuperacao(true)} className="text-[13px] font-medium text-[#1767d2] hover:underline">Esqueceu a senha?</button>
           </div>
 
           <div className="pt-8">
@@ -66,10 +80,26 @@ export default function Login({ onLogin }) {
           </div>
         </form>
 
-        <footer className="mt-9 flex flex-wrap items-center justify-center gap-x-3 text-[13px] text-[#8998aa]">
-          <span>Escola Central</span><span aria-hidden="true">·</span><span>Ambiente educacional</span>
-        </footer>
+        <Footer />
       </section>
     </main>
   )
 }             
+
+function Brand() {
+  return (
+    <div className="mb-10 flex items-center justify-center gap-3.5">
+      <div className="flex size-[53px] items-center justify-center rounded-2xl bg-[#e0edff] text-[#2474df]">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-5">
+          <path d="m2.8 9.3 9.2-5 9.2 5-9.2 5-9.2-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M6.5 11.5v4.2c3.4 2.8 7.6 2.8 11 0v-4.2M21.2 9.5v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <div><p className="text-[19px] font-bold leading-6 tracking-[0.02em] text-[#0c1b31]">EDULYTICS</p><p className="mt-0.5 text-sm text-[#71819a]">Painel escolar</p></div>
+    </div>
+  )
+}
+
+function Footer() {
+  return <footer className="mt-9 flex flex-wrap items-center justify-center gap-x-3 text-[13px] text-[#8998aa]"><span>Escola Central</span><span aria-hidden="true">·</span><span>Ambiente educacional</span></footer>
+}
