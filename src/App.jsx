@@ -1,13 +1,5 @@
 ﻿import { useState } from 'react'
-import { useEffect } from 'react'
-import Login from './components/Login.jsx'
-import Alunos from './components/alunos.jsx'
-import Professor from './components/professor.jsx'
-import Coordenador from './components/coodernador.jsx'
-import Aprendizagem from './components/aprendizagem.jsx'
-import Desempenho from './components/desempenho.jsx'
-import Frequencia from './components/frequencia.jsx'
-import Relatorio from './components/relatorio.jsx'
+import { lazy, Suspense, useEffect } from 'react'
 import menuIcon from './assets/menu-aberto.png'
 import visaoIcon from './assets/visaogeral.png'
 import desempenhoIcon from './assets/desempenho.png'
@@ -17,10 +9,20 @@ import aprenderIcon from './assets/aprender.png'
 import alunosResumoIcon from './assets/alunos vg.png'
 import calendarioIcon from './assets/calendario.png'
 import registrosIcon from './assets/registros.png'
-import alunoFoto from './assets/aluno.jpg'
-import professorFoto from './assets/professor.png'
-import coordenacaoFoto from './assets/diretor.jpg'
+import alunoFoto from './assets/otimizadas/aluno.jpg'
+import professorFoto from './assets/otimizadas/professor.jpg'
+import coordenacaoFoto from './assets/otimizadas/diretor.jpg'
 import './App.css'
+
+const Login = lazy(() => import('./components/Login.jsx'))
+const Alunos = lazy(() => import('./components/alunos.jsx'))
+const Professor = lazy(() => import('./components/professor.jsx'))
+const Coordenador = lazy(() => import('./components/coodernador.jsx'))
+const Aprendizagem = lazy(() => import('./components/aprendizagem.jsx'))
+const Desempenho = lazy(() => import('./components/desempenho.jsx'))
+const Frequencia = lazy(() => import('./components/frequencia.jsx'))
+const Relatorio = lazy(() => import('./components/relatorio.jsx'))
+const carregando = <div className="px-4 py-8 text-center text-sm text-slate-500" role="status">Carregando…</div>
 
 const paginas = [
   { id: 'visao', nome: 'Visão geral', icone: visaoIcon },
@@ -107,7 +109,7 @@ function App() {
   }
 
   if (paginaAtual === 'login') {
-    return <div className="min-h-screen bg-slate-100 text-slate-900"><Login onLogin={() => navegar('perfil')} /></div>
+    return <div className="min-h-screen bg-slate-100 text-slate-900"><Suspense fallback={carregando}><Login onLogin={() => navegar('perfil')} /></Suspense></div>
   }
 
   if (paginaAtual === 'perfil') {
@@ -128,7 +130,7 @@ function App() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {perfis.map(({ nome, detalhe, imagem, destino }) => (
               <button key={nome} onClick={() => { setPerfil(nome); navegar(destino) }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
-                <img src={imagem} alt="" className="h-52 w-full object-cover object-center" />
+                <img src={imagem} alt="" loading="lazy" decoding="async" className="h-52 w-full object-cover object-center" />
                 <span className="block p-5">
                   <span className="block text-xl font-bold text-[#10233f]">{nome}</span>
                   <span className="mt-1.5 block min-h-10 text-sm leading-5 text-[#71819a]">{detalhe}</span>
@@ -143,9 +145,9 @@ function App() {
     )
   }
 
-  if (paginaAtual === 'aluno') return <PerfilPage Componente={Alunos} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} />
-  if (paginaAtual === 'professor') return <PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={() => navegar('visao')} />
-  if (paginaAtual === 'coordenador') return <PerfilPage Componente={Coordenador} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} />
+  if (paginaAtual === 'aluno') return <Suspense fallback={carregando}><PerfilPage Componente={Alunos} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
+  if (paginaAtual === 'professor') return <Suspense fallback={carregando}><PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={() => navegar('visao')} /></Suspense>
+  if (paginaAtual === 'coordenador') return <Suspense fallback={carregando}><PerfilPage Componente={Coordenador} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
 
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
 
@@ -175,7 +177,7 @@ function App() {
       </div>}
 
       <div className="app-content mx-auto max-w-[1500px]">
-        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Componente /> : <p className="text-sm text-slate-600">Esta seção estará disponível em breve.</p>}</section> })()}
+        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Suspense fallback={carregando}><Componente /></Suspense> : <p className="text-sm text-slate-600">Esta seção estará disponível em breve.</p>}</section> })()}
         {paginaAtual === 'visao' && <>
         <section aria-label="Indicadores" className="dashboard-stats mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[
