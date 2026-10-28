@@ -225,8 +225,8 @@ export default App
 
 function PerfilPage({ Componente, perfil, onSair, professor = false, onAbrirVisaoGeral }) {
   return (
-    <main className={`min-h-screen px-5 py-6 sm:px-8 ${professor ? 'bg-[#f7f9fc] text-[#10213a]' : 'bg-[#f7f9fc] text-[#10213a]'}`}>
-      <header className={`mx-auto mb-7 flex items-center justify-between ${professor ? 'max-w-[1500px]' : 'max-w-[1100px]'}`}>
+    <main className={`min-h-screen px-5 py-6 sm:px-8 ${professor ? 'bg-[#f7f9fc] text-[#10213a] lg:py-3' : 'bg-[#f7f9fc] text-[#10213a]'}`}>
+      <header className={`mx-auto flex items-center justify-between ${professor ? 'mb-3 max-w-[1500px]' : 'mb-7 max-w-[1100px]'}`}>
           <div>{!professor && <><p className="text-sm font-bold tracking-wide text-[#2875df]">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">Área de {perfil}</p></>}</div>
         <button onClick={onSair} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Sair</button>
       </header>
