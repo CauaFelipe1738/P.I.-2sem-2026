@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react'
+import { useEffect } from 'react'
 import Login from './components/Login.jsx'
 import Alunos from './components/alunos.jsx'
 import Professor from './components/professor.jsx'
@@ -75,6 +76,21 @@ function App() {
   const [observacoes, setObservacoes] = useState(observacoesIniciais)
   const [modalAberto, setModalAberto] = useState(false)
 
+  useEffect(() => {
+    if (!window.history.state?.pagina) window.history.replaceState({ pagina: 'login' }, '')
+    const sincronizarPagina = (event) => {
+      if (event.state?.pagina) setPaginaAtual(event.state.pagina)
+    }
+    window.addEventListener('popstate', sincronizarPagina)
+    return () => window.removeEventListener('popstate', sincronizarPagina)
+  }, [])
+
+  function navegar(pagina) {
+    if (pagina === paginaAtual) return
+    window.history.pushState({ pagina }, '')
+    setPaginaAtual(pagina)
+  }
+
   function alternarDimensao(nome) {
     setSelecionadas((atuais) => atuais.includes(nome) ? atuais.filter((item) => item !== nome) : [...atuais, nome])
   }
@@ -91,7 +107,7 @@ function App() {
   }
 
   if (paginaAtual === 'login') {
-    return <div className="min-h-screen bg-slate-100 text-slate-900"><Login onLogin={() => setPaginaAtual('perfil')} /></div>
+    return <div className="min-h-screen bg-slate-100 text-slate-900"><Login onLogin={() => navegar('perfil')} /></div>
   }
 
   if (paginaAtual === 'perfil') {
@@ -111,7 +127,7 @@ function App() {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {perfis.map(({ nome, detalhe, imagem, destino }) => (
-              <button key={nome} onClick={() => { setPerfil(nome); setPaginaAtual(destino) }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
+              <button key={nome} onClick={() => { setPerfil(nome); navegar(destino) }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
                 <img src={imagem} alt="" className="h-52 w-full object-cover object-center" />
                 <span className="block p-5">
                   <span className="block text-xl font-bold text-[#10233f]">{nome}</span>
@@ -121,15 +137,15 @@ function App() {
               </button>
             ))}
           </div>
-          <button onClick={() => setPaginaAtual('login')} className="mx-auto mt-7 block text-sm font-semibold text-[#64758d] hover:text-[#1767d2]">Voltar ao login</button>
+          <button onClick={() => navegar('login')} className="mx-auto mt-7 block text-sm font-semibold text-[#64758d] hover:text-[#1767d2]">Voltar ao login</button>
         </section>
       </main>
     )
   }
 
-  if (paginaAtual === 'aluno') return <PerfilPage Componente={Alunos} perfil={perfil} onSair={() => { setPerfil(null); setPaginaAtual('login') }} />
-  if (paginaAtual === 'professor') return <PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); setPaginaAtual('login') }} />
-  if (paginaAtual === 'coordenador') return <PerfilPage Componente={Coordenador} perfil={perfil} onSair={() => { setPerfil(null); setPaginaAtual('login') }} />
+  if (paginaAtual === 'aluno') return <PerfilPage Componente={Alunos} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} />
+  if (paginaAtual === 'professor') return <PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={() => navegar('visao')} />
+  if (paginaAtual === 'coordenador') return <PerfilPage Componente={Coordenador} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} />
 
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
 
@@ -141,7 +157,7 @@ function App() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{paginaSelecionada?.nome}</h1>
           <p className="mt-1 whitespace-nowrap text-xs text-slate-600">Apoio à observação docente · Escola Central · Dados demonstrativos</p>
         </div>
-        <button onClick={() => setPaginaAtual('login')} aria-label="Sair" className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
+        <button onClick={() => navegar('login')} aria-label="Sair" className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
       </header>
 
       {menuAberto && <div className="drawer-layer fixed inset-0 z-30">
@@ -153,7 +169,7 @@ function App() {
             <button className="ml-auto self-start text-slate-400 md:hidden" onClick={() => setMenuAberto(false)} aria-label="Fechar menu">×</button>
           </div>
           <p className="mb-2 px-3 text-[12px] font-medium uppercase tracking-[.08em] text-slate-400">Menu principal</p>
-          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }) => <button key={id} onClick={() => { setPaginaAtual(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}</button>)}</nav>
+          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }) => <button key={id} onClick={() => { navegar(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}</button>)}</nav>
           <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">{(perfil || 'AC').slice(0, 2).toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{perfil || 'Alex Chen'}</p><p className="mt-1 text-sm text-slate-500">Perfil selecionado</p></div></div>
         </aside>
       </div>}
@@ -205,14 +221,14 @@ function App() {
 
 export default App
 
-function PerfilPage({ Componente, perfil, onSair }) {
+function PerfilPage({ Componente, perfil, onSair, professor = false, onAbrirVisaoGeral }) {
   return (
-    <main className="min-h-screen bg-[#f7f9fc] px-5 py-6 text-[#10213a] sm:px-8">
-      <header className="mx-auto mb-7 flex max-w-[1100px] items-center justify-between">
-        <div><p className="text-sm font-bold tracking-wide text-[#2875df]">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">Área de {perfil}</p></div>
+    <main className={`min-h-screen px-5 py-6 sm:px-8 ${professor ? 'bg-[#f7f9fc] text-[#10213a]' : 'bg-[#f7f9fc] text-[#10213a]'}`}>
+      <header className={`mx-auto mb-7 flex items-center justify-between ${professor ? 'max-w-[1500px]' : 'max-w-[1100px]'}`}>
+          <div>{!professor && <><p className="text-sm font-bold tracking-wide text-[#2875df]">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">Área de {perfil}</p></>}</div>
         <button onClick={onSair} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Sair</button>
       </header>
-      <section className="mx-auto max-w-[1100px] rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><Componente /></section>
+      <section className={`mx-auto ${professor ? 'max-w-[1500px] bg-[#f7f9fc]' : 'max-w-[1100px] rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm'}`}><Componente onAbrirVisaoGeral={onAbrirVisaoGeral} /></section>
     </main>
   )
 }

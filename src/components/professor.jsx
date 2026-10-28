@@ -1,139 +1,87 @@
 import { useMemo, useState } from 'react'
+import aprenderIcon from '../assets/aprender.png'
 
 const cursos = [
-  { id: 1, nome: 'Desenvolvimento Web', descricao: 'Aprenda a criar aplicações web modernas com HTML, CSS e JavaScript.', status: 'Em andamento', alunos: 12, carga: '80h', cor: 'blue', meus: true },
-  { id: 2, nome: 'Python para Iniciantes', descricao: 'Introdução à linguagem Python, com foco em lógica de programação e projetos práticos.', status: 'Em breve', alunos: 8, carga: '60h', cor: 'amber', meus: true },
-  { id: 3, nome: 'Banco de Dados', descricao: 'Aprenda a modelar, criar e gerenciar bancos de dados com SQL e PostgreSQL.', status: 'Em andamento', alunos: 8, carga: '60h', cor: 'violet', meus: true },
-  { id: 4, nome: 'Computação em Nuvem', descricao: 'Entenda os conceitos de cloud computing e aprenda a usar as principais plataformas.', status: 'Concluído', alunos: 15, carga: '40h', cor: 'sky', meus: false },
-  { id: 5, nome: 'Ciência de Dados', descricao: 'Explore análise de dados, visualização e machine learning com Python.', status: 'Em andamento', alunos: 10, carga: '100h', cor: 'emerald', meus: true },
-  { id: 6, nome: 'Desenvolvimento Mobile', descricao: 'Crie aplicações móveis nativas e multiplataforma com React Native.', status: 'Em breve', alunos: 6, carga: '70h', cor: 'orange', meus: false },
+  { id: 1, nome: 'Desenvolvimento Web', descricao: 'Aprenda a criar aplicações web modernas com HTML, CSS, JavaScript, React e Tailwind.', status: 'Em andamento', alunos: 12, carga: '80h', cor: 'blue', professor: 'Lucas Ferreira' },
+  { id: 2, nome: 'Python para Iniciantes', descricao: 'Introdução à linguagem Python, com foco em lógica de programação e projetos práticos.', status: 'Em breve', alunos: 8, carga: '60h', cor: 'sky', professor: 'Ana Souza' },
+  { id: 3, nome: 'Banco de Dados', descricao: 'Aprenda a modelar, criar e gerenciar bancos de dados com SQL e PostgreSQL.', status: 'Em andamento', alunos: 8, carga: '60h', cor: 'violet', professor: 'Carlos Mendes' },
+  { id: 4, nome: 'Computação em Nuvem', descricao: 'Entenda os conceitos de cloud computing e aprenda a usar as principais plataformas.', status: 'Concluído', alunos: 15, carga: '40h', cor: 'blue' },
+  { id: 5, nome: 'Ciência de Dados', descricao: 'Explore análise de dados, visualização e machine learning com Python.', status: 'Em andamento', alunos: 10, carga: '100h', cor: 'emerald', professor: 'Rafael Costa' },
+  { id: 6, nome: 'Desenvolvimento Mobile', descricao: 'Crie aplicações móveis nativas e multiplataforma com React Native.', status: 'Em breve', alunos: 0, carga: '70h', cor: 'orange' },
 ]
 
-const nomesAlunos = [
-  'Lucas Almeida', 'Mariana Santos', 'Felipe Oliveira', 'Beatriz Costa',
-  'Rafael Pereira', 'Camila Rodrigues', 'Pedro Martins', 'Ana Clara Souza',
-  'João Pedro Lima', 'Isabela Ferreira', 'Gabriel Rocha', 'Laura Mendes',
-  'Matheus Carvalho', 'Sofia Ribeiro', 'Enzo Martins',
-]
-
-const alunos = cursos.flatMap((curso, indiceCurso) =>
-  nomesAlunos.slice(0, curso.alunos).map((nome, indice) => ({
-    nome,
-    curso: curso.nome,
-    inicial: nome.split(' ').map((parte) => parte[0]).join('').slice(0, 2),
-    id: String(indiceCurso) + '-' + String(indice),
-  })),
-)
-
-const cores = {
-  blue: 'bg-blue-100 text-blue-700', amber: 'bg-amber-100 text-amber-700',
-  violet: 'bg-violet-100 text-violet-700', sky: 'bg-sky-100 text-sky-700',
-  emerald: 'bg-emerald-100 text-emerald-700', orange: 'bg-orange-100 text-orange-700',
-}
+const nomesAlunos = ['Lucas Almeida', 'Mariana Santos', 'Felipe Oliveira', 'Beatriz Costa', 'Rafael Pereira', 'Camila Rodrigues', 'Pedro Martins', 'Ana Clara Souza', 'João Pedro Lima', 'Isabela Ferreira', 'Gabriel Rocha', 'Laura Mendes', 'Matheus Carvalho', 'Sofia Ribeiro', 'Enzo Martins']
+const alunos = cursos.flatMap((curso, indiceCurso) => nomesAlunos.slice(0, curso.alunos).map((nome, indice) => ({ nome, curso: curso.nome, inicial: nome.split(' ').map((parte) => parte[0]).join('').slice(0, 2), id: `${indiceCurso}-${indice}` })))
 
 function Icon({ children, className = 'size-5' }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
 }
 
-export default function Professor() {
+function SearchIcon({ className = 'size-4' }) {
+  return <Icon className={className}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon>
+}
+
+export default function Professor({ onAbrirVisaoGeral = () => {} }) {
   const [busca, setBusca] = useState('')
   const [status, setStatus] = useState('Todos')
-  const [aba, setAba] = useState('Todos os cursos')
-  const [ordenacao, setOrdenacao] = useState('Nome A-Z')
+  const [ordenacao, setOrdenacao] = useState('Nome (A-Z)')
+  const [pagina, setPagina] = useState(1)
+  const [buscaAluno, setBuscaAluno] = useState('')
   const [somenteMeusAlunos, setSomenteMeusAlunos] = useState(true)
   const [verTodosAlunos, setVerTodosAlunos] = useState(false)
-  const [buscaAluno, setBuscaAluno] = useState('')
-  const [cursoSelecionado, setCursoSelecionado] = useState(null)
 
-  const cursosFiltrados = useMemo(() => cursos.filter((curso) => {
-    const correspondeBusca = `${curso.nome} ${curso.descricao}`.toLocaleLowerCase('pt-BR').includes(busca.toLocaleLowerCase('pt-BR'))
-    const correspondeStatus = status === 'Todos' || curso.status === status
-    const correspondeAba = aba !== 'Meus cursos' || curso.meus
-    return correspondeBusca && correspondeStatus && correspondeAba
-  }).sort((a, b) => ordenacao === 'Nome Z-A' ? b.nome.localeCompare(a.nome, 'pt-BR') : ordenacao === 'Mais alunos' ? b.alunos - a.alunos : a.nome.localeCompare(b.nome, 'pt-BR')), [aba, busca, ordenacao, status])
-
+  const meusCursos = cursos
+  const cursosFiltrados = useMemo(() => meusCursos.filter((curso) => {
+    const texto = `${curso.nome} ${curso.descricao}`.toLocaleLowerCase('pt-BR')
+    return texto.includes(busca.toLocaleLowerCase('pt-BR')) && (status === 'Todos' || curso.status === status)
+  }).sort((a, b) => ordenacao === 'Nome (Z-A)' ? b.nome.localeCompare(a.nome, 'pt-BR') : ordenacao === 'Mais alunos' ? b.alunos - a.alunos : a.nome.localeCompare(b.nome, 'pt-BR')), [busca, meusCursos, ordenacao, status])
+  const paginasTotais = Math.max(1, Math.ceil(cursosFiltrados.length / 3))
+  const cursosVisiveis = cursosFiltrados.slice((pagina - 1) * 3, pagina * 3)
   const alunosVisiveis = useMemo(() => alunos.filter((aluno) => {
-    const cursoDoProfessor = cursos.some((curso) => curso.nome === aluno.curso && curso.meus)
-    const cursoAtual = !cursoSelecionado || aluno.curso === cursoSelecionado
-    const pertenceAoProfessor = !somenteMeusAlunos || cursoDoProfessor
-    return cursoAtual && pertenceAoProfessor && aluno.nome.toLocaleLowerCase('pt-BR').includes(buscaAluno.toLocaleLowerCase('pt-BR'))
-  }), [buscaAluno, cursoSelecionado, somenteMeusAlunos])
-
-  const alunosMostrados = verTodosAlunos ? alunosVisiveis : alunosVisiveis.slice(0, 5)
-
-  if (cursoSelecionado) {
-    const curso = cursos.find((item) => item.nome === cursoSelecionado)
-    const alunosMatriculados = alunos.filter((aluno) => aluno.curso === curso?.nome)
-    const alunosDoCurso = alunosMatriculados.filter((aluno) => aluno.nome.toLocaleLowerCase('pt-BR').includes(buscaAluno.toLocaleLowerCase('pt-BR')))
-
-    return (
-      <div className="space-y-5">
-        <button onClick={() => setCursoSelecionado(null)} className="inline-flex items-center gap-2 text-sm font-semibold text-[#1767d2] hover:underline"><span aria-hidden="true">←</span> Voltar aos cursos</button>
-        <section className="rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Visão geral do curso</p><h1 className="mt-1 text-2xl font-bold text-[#10213a]">{curso?.nome}</h1><p className="mt-2 max-w-2xl text-sm text-slate-600">{curso?.descricao}</p></div><span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">{curso?.status}</span></div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2"><article className="rounded-lg bg-[#f7f9fc] p-4"><p className="text-xs text-slate-500">Alunos matriculados</p><p className="mt-1 font-semibold text-[#10213a]">{alunosMatriculados.length}</p></article><article className="rounded-lg bg-[#f7f9fc] p-4"><p className="text-xs text-slate-500">Carga horaria</p><p className="mt-1 font-semibold text-[#10213a]">{curso?.carga}</p></article></div>
-        </section>
-        <section className="rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-[0_2px_5px_rgba(15,23,42,0.03)]"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-bold text-[#10213a]">Alunos do curso</h2><p className="mt-1 text-xs text-slate-500">{alunosDoCurso.length} alunos listados</p></div><label className="relative block"><span className="sr-only">Buscar aluno</span><Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon><input value={buscaAluno} onChange={(event) => setBuscaAluno(event.target.value)} placeholder="Buscar aluno..." className="h-10 w-full rounded-lg border border-[#d2deeb] pl-9 pr-3 text-xs outline-none focus:border-[#3980e6] sm:w-56" /></label></div><ul className="mt-3 divide-y divide-slate-100">{alunosDoCurso.map((aluno) => <li key={aluno.id} className="flex items-center gap-3 py-3"><span className="flex size-9 items-center justify-center rounded-full bg-[#eaf3ff] text-xs font-bold text-[#315f91]">{aluno.inicial}</span><span className="text-sm font-semibold text-slate-700">{aluno.nome}</span></li>)}{alunosDoCurso.length === 0 && <li className="py-5 text-sm text-slate-500">Nenhum aluno encontrado.</li>}</ul></section>
-      </div>
-    )
-  }
+    const curso = cursos.find((item) => item.nome === aluno.curso)
+    return (!somenteMeusAlunos || curso?.id !== 4 && curso?.id !== 6) && `${aluno.nome} ${aluno.curso}`.toLocaleLowerCase('pt-BR').includes(buscaAluno.toLocaleLowerCase('pt-BR'))
+  }), [buscaAluno, somenteMeusAlunos])
+  const listaAlunos = verTodosAlunos ? alunosVisiveis : alunosVisiveis.slice(0, 5)
 
   return (
-    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_230px]">
+    <div className="professor-page -mx-6 -mb-6 grid min-h-[calc(100vh-190px)] gap-5 bg-[#f7f9fc] px-6 py-5 text-[#10213a] lg:grid-cols-[minmax(0,1fr)_318px]">
       <section className="min-w-0">
-        <header className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Cursos da instituição</p>
-          <h1 className="mt-1 text-2xl font-bold text-[#10213a]">Cursos</h1>
-          <p className="mt-2 text-sm text-slate-600">Gerencie seus cursos e acompanhe os alunos matriculados.</p>
+        <header className="mb-3">
+          <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-[#eaf3ff]"><img src={aprenderIcon} alt="EDULYTICS" className="size-7 object-contain" /></div>
+          <h1 className="text-[27px] font-bold tracking-tight text-[#10213a]">Cursos</h1>
+          <p className="mt-0.5 text-sm text-slate-700">Gerencie e acompanhe todos os cursos da sua instituição.</p>
+          <p className="mt-1 max-w-3xl text-xs leading-[18px] text-slate-500">Aqui você pode visualizar e acessar as informações dos cursos, além de acompanhar os alunos e professores responsáveis.</p>
         </header>
 
-        <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_145px_145px]">
-          <label className="relative block">
-            <span className="sr-only">Pesquisar cursos</span>
-            <Icon className="pointer-events-none absolute left-3 top-1/2 size-[18px] -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon>
-            <input value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Buscar curso..." className="h-11 w-full rounded-lg border border-[#d2deeb] bg-white pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600"><span className="shrink-0">Filtrar por</span><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-11 min-w-0 flex-1 rounded-lg border border-[#d2deeb] bg-white px-3 text-sm outline-none focus:border-[#3980e6]"><option>Todos</option><option>Em andamento</option><option>Em breve</option><option>Concluído</option></select></label>
-          <label className="flex items-center gap-2 text-sm text-slate-600"><span className="shrink-0">Ordenar</span><select value={ordenacao} onChange={(event) => setOrdenacao(event.target.value)} className="h-11 min-w-0 flex-1 rounded-lg border border-[#d2deeb] bg-white px-3 text-sm outline-none focus:border-[#3980e6]"><option>Nome A-Z</option><option>Nome Z-A</option><option>Mais alunos</option></select></label>
+        <div className="mb-3 grid gap-2 rounded-lg border border-[#d9e1eb] bg-white p-2 sm:grid-cols-[minmax(0,1fr)_160px_170px]">
+          <label className="relative block"><span className="sr-only">Buscar cursos</span><SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-[17px] -translate-y-1/2 text-[#2875df]" /><input value={busca} onChange={(event) => { setBusca(event.target.value); setPagina(1) }} placeholder="Buscar cursos..." className="h-9 w-full rounded-lg border border-[#d2deeb] bg-white pl-10 pr-3 text-xs text-[#10213a] outline-none placeholder:text-slate-400 focus:border-[#3980e6]" /></label>
+          <label className="flex items-center gap-2 text-[10px] text-slate-600"><span className="shrink-0">Filtrar:</span><select value={status} onChange={(event) => { setStatus(event.target.value); setPagina(1) }} className="h-9 min-w-0 flex-1 rounded-lg border border-[#d2deeb] bg-white px-2 text-xs text-[#10213a] outline-none"><option>Todos</option><option>Em andamento</option><option>Em breve</option><option>Concluído</option></select></label>
+          <label className="flex items-center gap-2 text-[10px] text-slate-600"><span className="shrink-0">Ordenar:</span><select value={ordenacao} onChange={(event) => { setOrdenacao(event.target.value); setPagina(1) }} className="h-9 min-w-0 flex-1 rounded-lg border border-[#d2deeb] bg-white px-2 text-xs text-[#10213a] outline-none"><option>Nome (A-Z)</option><option>Nome (Z-A)</option><option>Mais alunos</option></select></label>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
-          {['Todos os cursos', 'Meus cursos'].map((item) => <button key={item} onClick={() => setAba(item)} className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${aba === item ? 'bg-[#2875df] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>{item}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${aba === item ? 'bg-white/20' : 'bg-slate-100'}`}>{item === 'Meus cursos' ? cursos.filter((curso) => curso.meus).length : cursos.length}</span></button>)}
-        </div>
-
-        <div className="space-y-3">
-          {cursosFiltrados.map((curso) => <button key={curso.id} onClick={() => { setBuscaAluno(''); setCursoSelecionado(curso.nome) }} aria-label={`Abrir visão geral de ${curso.nome}`} className="grid w-full gap-3 rounded-xl border border-[#d9e1eb] bg-white p-3 text-left shadow-[0_2px_5px_rgba(15,23,42,0.03)] transition hover:border-[#9bbdec] sm:grid-cols-[40px_minmax(0,1fr)_145px_16px] sm:items-center">
-            <span className={`flex size-10 items-center justify-center rounded-xl ${cores[curso.cor]}`}>
-              <Icon className="size-5">
-                {curso.id === 1 && <><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14" /></>}
-                {curso.id === 2 && <><path d="M8 7a3 3 0 1 0 0 6h8a3 3 0 1 0-3-3" /><path d="M16 17a3 3 0 1 0 0-6H8a3 3 0 1 0 3 3" /></>}
-                {curso.id === 3 && <><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" /></>}
-                {curso.id === 4 && <path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9a4.5 4.5 0 0 0 1 9Z" />}
-                {curso.id === 5 && <><path d="M4 20V11M10 20V5M16 20v-8M22 20V8" /><path d="M2 20h21" /></>}
-                {curso.id === 6 && <><rect x="6" y="2.5" width="12" height="19" rx="2" /><path d="M10 5h4M11 18.5h2" /></>}
-              </Icon>
-            </span>
-            <span className="min-w-0"><span className="block font-bold text-[#10213a]">{curso.nome}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{curso.descricao}</span></span>
-            <span className="flex flex-wrap gap-x-3 gap-y-2 text-xs text-slate-600 sm:block sm:space-y-2"><span className={`inline-block rounded-full px-2.5 py-1 font-semibold ${curso.status === 'Em andamento' ? 'bg-emerald-50 text-emerald-700' : curso.status === 'Concluído' ? 'bg-slate-100 text-slate-600' : 'bg-blue-50 text-blue-700'}`}>{curso.status}</span><span className="block">{curso.alunos} alunos · {curso.carga}</span></span>
-            <span className="hidden text-xl text-blue-500 sm:block" aria-hidden="true">›</span>
+        <div className="space-y-2.5">
+          {cursosVisiveis.map((curso) => <button key={curso.id} type="button" onClick={onAbrirVisaoGeral} className="group relative grid w-full gap-4 overflow-hidden rounded-xl border border-[#d9e1eb] bg-white p-4 text-left shadow-[0_3px_10px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-[#9bbdec] hover:shadow-[0_8px_20px_rgba(40,117,223,0.11)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2875df] sm:grid-cols-[minmax(0,1fr)_170px_18px] sm:items-center">
+            <span className={`absolute inset-y-0 left-0 w-1 ${curso.status === 'Em andamento' ? 'bg-emerald-400' : curso.status === 'Concluído' ? 'bg-slate-300' : 'bg-[#2875df]'}`} aria-hidden="true" />
+            <span className="min-w-0 pl-1"><span className="flex flex-wrap items-center gap-2"><span className="text-[15px] font-bold tracking-[-0.01em] text-[#10213a] transition-colors group-hover:text-[#1767d2]">{curso.nome}</span><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${curso.status === 'Em andamento' ? 'bg-emerald-50 text-emerald-700' : curso.status === 'Concluído' ? 'bg-slate-100 text-slate-600' : 'bg-blue-50 text-blue-700'}`}><span className={`size-1.5 rounded-full ${curso.status === 'Em andamento' ? 'bg-emerald-500' : curso.status === 'Concluído' ? 'bg-slate-400' : 'bg-blue-500'}`} />{curso.status}</span></span><span className="mt-1.5 block max-w-3xl text-xs leading-[18px] text-slate-600">{curso.descricao}</span><span className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.06em] text-[#7890aa]">Detalhes do curso <span className="text-[#2875df] transition-transform group-hover:translate-x-1">→</span></span></span>
+            <span className="grid grid-cols-2 gap-2 sm:grid-cols-1"><span className="flex items-center gap-2 rounded-lg bg-[#f5f8fc] px-2.5 py-2 text-[11px] text-slate-600"><Icon className="size-4 shrink-0 text-[#2875df]"><><circle cx="9" cy="8" r="3" /><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 11a3 3 0 0 0 0-6M18 14a5 5 0 0 1 3 5v1" /></></Icon><span><strong className="font-semibold text-[#10213a]">{curso.alunos}</strong> alunos</span></span><span className="flex items-center gap-2 rounded-lg bg-[#f5f8fc] px-2.5 py-2 text-[11px] text-slate-600"><Icon className="size-4 shrink-0 text-[#2875df]"><><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></></Icon><span><strong className="font-semibold text-[#10213a]">{curso.carga}</strong> de carga</span></span></span>
+            <span className="hidden size-8 items-center justify-center rounded-full bg-[#edf4fc] text-lg text-[#2875df] transition group-hover:bg-[#2875df] group-hover:text-white sm:flex" aria-hidden="true">›</span>
           </button>)}
-          {cursosFiltrados.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center"><p className="font-semibold text-slate-700">Nenhum curso encontrado</p><p className="mt-1 text-sm text-slate-500">Tente mudar a pesquisa ou o filtro.</p></div>}
+          {cursosFiltrados.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center"><p className="text-sm font-semibold text-slate-700">Nenhum curso encontrado</p><p className="mt-1 text-xs text-slate-500">Tente mudar o termo da pesquisa ou os filtros.</p></div>}
         </div>
+        <nav aria-label="Paginação dos cursos" className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-600"><button onClick={() => setPagina((atual) => Math.max(1, atual - 1))} disabled={pagina === 1} className="px-1 text-[#2875df] disabled:opacity-40" aria-label="Página anterior">‹</button>{Array.from({ length: paginasTotais }, (_, indice) => indice + 1).map((numero) => <button key={numero} onClick={() => setPagina(numero)} aria-current={pagina === numero ? 'page' : undefined} className={`size-8 rounded-md ${pagina === numero ? 'bg-[#2875df] text-white' : 'hover:bg-slate-100'}`}>{numero}</button>)}<button onClick={() => setPagina((atual) => Math.min(paginasTotais, atual + 1))} disabled={pagina === paginasTotais} className="px-1 text-[#2875df] disabled:opacity-40" aria-label="Próxima página">›</button></nav>
       </section>
 
-      <aside className="h-fit rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] md:sticky md:top-5">
-        <div className="flex items-center justify-between"><h2 className="font-bold text-[#10213a]">Alunos dos cursos</h2><span className="rounded-full bg-[#eaf3ff] px-2 py-1 text-xs font-semibold text-[#1760b5]">{alunosVisiveis.length}</span></div>
-        <p className="mt-1 text-xs text-slate-500">{cursoSelecionado || 'Alunos matriculados'}</p>
-        <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-600">
-          <span>Somente alunos dos meus cursos</span><input type="checkbox" checked={somenteMeusAlunos} onChange={(event) => setSomenteMeusAlunos(event.target.checked)} className="size-4 accent-[#2875df]" />
-        </label>
-        <label className="relative mt-3 block"><span className="sr-only">Buscar aluno</span><Icon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></Icon><input value={buscaAluno} onChange={(event) => setBuscaAluno(event.target.value)} placeholder="Buscar aluno..." className="h-10 w-full rounded-lg border border-[#d2deeb] pl-9 pr-3 text-xs outline-none focus:border-[#3980e6]" /></label>
-        {cursoSelecionado && <button onClick={() => setCursoSelecionado(null)} className="mt-2 text-xs font-semibold text-[#1767d2] hover:underline">Limpar curso selecionado</button>}
-        <ul className="mt-3 divide-y divide-slate-100">
-          {alunosMostrados.map((aluno) => <li key={aluno.id} className="flex items-center gap-3 py-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#eaf3ff] text-xs font-bold text-[#315f91]">{aluno.inicial}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-700">{aluno.nome}</span><span className="block truncate text-xs text-slate-500">{aluno.curso}</span></span></li>)}
-          {alunosVisiveis.length === 0 && <li className="py-6 text-center text-xs text-slate-500">Nenhum aluno corresponde à pesquisa.</li>}
-        </ul>
-        {alunosVisiveis.length > 5 && <button type="button" onClick={() => setVerTodosAlunos((atual) => !atual)} className="mt-3 text-xs font-semibold text-[#1767d2] hover:underline">{verTodosAlunos ? 'Mostrar menos' : 'Ver todos os alunos'} →</button>}
+      <aside>
+        <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
+          <div className="flex items-center justify-between"><h2 className="flex items-center gap-2 text-sm font-bold text-[#10213a]"><Icon className="size-[18px] text-[#2875df]"><><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></></Icon>Alunos do Curso</h2><button onClick={() => setVerTodosAlunos((valor) => !valor)} className="text-[11px] font-semibold text-[#1767d2] hover:underline">Ver todos</button></div>
+          <div className="mt-3 flex items-center -space-x-2" aria-hidden="true">{alunosVisiveis.slice(0, 5).map((aluno, indice) => <span key={aluno.id} className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white ${['bg-blue-500', 'bg-sky-700', 'bg-slate-500', 'bg-violet-500', 'bg-indigo-400'][indice]}`}>{aluno.inicial}</span>)}<span className="ml-1 flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#eaf3ff] text-[9px] text-[#315f91]">+8</span></div>
+          <p className="mt-2 text-xs text-slate-600">{alunosVisiveis.length} alunos matriculados</p>
+          <label className="mt-3 flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#d9e1eb] bg-slate-50 px-2.5 py-2 text-[10px] text-slate-600"><span>Apenas alunos do professor</span><input type="checkbox" checked={somenteMeusAlunos} onChange={(event) => setSomenteMeusAlunos(event.target.checked)} className="size-4 accent-[#2875df]" /></label>
+          <label className="relative mt-2.5 block"><span className="sr-only">Buscar aluno</span><SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#2875df]" /><input value={buscaAluno} onChange={(event) => setBuscaAluno(event.target.value)} placeholder="Buscar aluno..." className="h-9 w-full rounded-lg border border-[#d2deeb] bg-white pl-8 pr-2 text-[11px] text-[#10213a] outline-none placeholder:text-slate-400 focus:border-[#3980e6]" /></label>
+          <ul className="mt-2 divide-y divide-slate-100">{listaAlunos.map((aluno) => <li key={aluno.id} className="flex items-center gap-2 py-2"><span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#d4e1f1] bg-[#eaf3ff] text-[9px] font-bold text-[#315f91]">{aluno.inicial}</span><span className="min-w-0"><span className="block truncate text-[11px] font-semibold text-slate-700">{aluno.nome}</span><span className="block text-[10px] text-emerald-600">● Ativo</span></span></li>)}{alunosVisiveis.length === 0 && <li className="py-4 text-center text-[11px] text-slate-500">Nenhum aluno corresponde à pesquisa.</li>}</ul>
+          {alunosVisiveis.length > 5 && <button onClick={() => setVerTodosAlunos((valor) => !valor)} className="mt-1 pl-10 text-[11px] font-semibold text-[#1767d2] hover:underline">{verTodosAlunos ? 'Mostrar menos' : 'Ver todos os alunos'} →</button>}
+        </section>
+
       </aside>
     </div>
   )
