@@ -1,13 +1,14 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import Login from './components/Login.jsx'
 import Alunos from './components/alunos.jsx'
+import Unidade from './components/unidade.jsx'
+import Coordenador from './components/coodernador.jsx'
 import Aprendizagem from './components/aprendizagem.jsx'
 import Desempenho from './components/desempenho.jsx'
 import Frequencia from './components/frequencia.jsx'
 import Relatorio from './components/relatorio.jsx'
 import menuIcon from './assets/menu-aberto.png'
 import visaoIcon from './assets/visaogeral.png'
-import alunosIcon from './assets/alunos menu.png'
 import desempenhoIcon from './assets/desempenho.png'
 import relatorioIcon from './assets/relatorio.png'
 import frequenciaIcon from './assets/frequencia.png'
@@ -21,37 +22,36 @@ import coordenacaoFoto from './assets/diretor.jpg'
 import './App.css'
 
 const paginas = [
-  { id: 'visao', nome: 'Visão geral', icone: visaoIcon },
-  { id: 'alunos', nome: 'Alunos', icone: alunosIcon, Componente: Alunos },
+  { id: 'visao', nome: 'VisÃ£o geral', icone: visaoIcon },
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
-  { id: 'relatorio', nome: 'Relatórios', icone: relatorioIcon, Componente: Relatorio },
-  { id: 'frequencia', nome: 'Frequência', icone: frequenciaIcon, Componente: Frequencia },
+  { id: 'relatorio', nome: 'RelatÃ³rios', icone: relatorioIcon, Componente: Relatorio },
+  { id: 'frequencia', nome: 'FrequÃªncia', icone: frequenciaIcon, Componente: Frequencia },
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
 ]
 
 const dimensoesIniciais = [
-  { nome: 'Participação', total: 0 },
+  { nome: 'ParticipaÃ§Ã£o', total: 0 },
   { nome: 'Engajamento', total: 0 },
-  { nome: 'Colaboração', total: 0 },
+  { nome: 'ColaboraÃ§Ã£o', total: 0 },
   { nome: 'Autonomia', total: 0 },
-  { nome: 'Compreensão', total: 0 },
-  { nome: 'Estratégias', total: 0 },
+  { nome: 'CompreensÃ£o', total: 0 },
+  { nome: 'EstratÃ©gias', total: 0 },
 ]
 
 const observacoesIniciais = [
   {
-    nome: 'Sarah Jensen', turma: '9º A', data: '24 set', dimensao: 'Participação',
-    descricao: 'Compartilhou uma estratégia de resolução durante a atividade em grupo.',
-    proximo: 'Convidar a explicar o raciocínio para a turma.',
+    nome: 'Sarah Jensen', turma: '9Âº A', data: '24 set', dimensao: 'ParticipaÃ§Ã£o',
+    descricao: 'Compartilhou uma estratÃ©gia de resoluÃ§Ã£o durante a atividade em grupo.',
+    proximo: 'Convidar a explicar o raciocÃ­nio para a turma.',
   },
   {
-    nome: 'Mateus Lima', turma: '9º A', data: '23 set', dimensao: 'Autonomia',
-    descricao: 'Iniciou a atividade e consultou os materiais de referência sem lembrete.',
+    nome: 'Mateus Lima', turma: '9Âº A', data: '23 set', dimensao: 'Autonomia',
+    descricao: 'Iniciou a atividade e consultou os materiais de referÃªncia sem lembrete.',
   },
   {
-    nome: 'Ana Costa', turma: '9º B', data: '20 set', dimensao: 'Compreensão',
+    nome: 'Ana Costa', turma: '9Âº B', data: '20 set', dimensao: 'CompreensÃ£o',
     descricao: 'Aplicou o conceito com apoio de um exemplo visual.',
-    proximo: 'Retomar com material concreto na próxima aula.',
+    proximo: 'Retomar com material concreto na prÃ³xima aula.',
   },
 ]
 
@@ -96,9 +96,9 @@ function App() {
 
   if (paginaAtual === 'perfil') {
     const perfis = [
-      { nome: 'Aluno', detalhe: 'Acompanhe seu percurso de aprendizagem.', imagem: alunoFoto },
-      { nome: 'Professor', detalhe: 'Registre observações e acompanhe suas turmas.', imagem: professorFoto },
-      { nome: 'Coordenação', detalhe: 'Consulte indicadores e informações da escola.', imagem: coordenacaoFoto },
+      { nome: 'Aluno', detalhe: 'Acompanhe seu percurso de aprendizagem.', imagem: alunoFoto, destino: 'aluno' },
+      { nome: 'Professor', detalhe: 'Registre observaÃ§Ãµes e acompanhe suas turmas.', imagem: professorFoto, destino: 'professor' },
+      { nome: 'CoordenaÃ§Ã£o', detalhe: 'Consulte indicadores e informaÃ§Ãµes da escola.', imagem: coordenacaoFoto, destino: 'coordenador' },
     ]
 
     return (
@@ -110,13 +110,13 @@ function App() {
             <p className="mt-2 text-[15px] text-[#71819a]">Escolha seu perfil para acessar o ambiente da escola.</p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {perfis.map(({ nome, detalhe, imagem }) => (
-              <button key={nome} onClick={() => { setPerfil(nome); setPaginaAtual('visao') }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
+            {perfis.map(({ nome, detalhe, imagem, destino }) => (
+              <button key={nome} onClick={() => { setPerfil(nome); setPaginaAtual(destino) }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
                 <img src={imagem} alt="" className="h-52 w-full object-cover object-center" />
                 <span className="block p-5">
                   <span className="block text-xl font-bold text-[#10233f]">{nome}</span>
                   <span className="mt-1.5 block min-h-10 text-sm leading-5 text-[#71819a]">{detalhe}</span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1767d2]">Acessar <span aria-hidden="true">→</span></span>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#1767d2]">Acessar <span aria-hidden="true">â†’</span></span>
                 </span>
               </button>
             ))}
@@ -127,6 +127,10 @@ function App() {
     )
   }
 
+  if (paginaAtual === 'aluno') return <Alunos />
+  if (paginaAtual === 'professor') return <Unidade />
+  if (paginaAtual === 'coordenador') return <Coordenador />
+
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
 
   return (
@@ -135,7 +139,7 @@ function App() {
         <button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button>
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-center">
           <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{paginaSelecionada?.nome}</h1>
-          <p className="mt-1 whitespace-nowrap text-xs text-slate-600">Apoio à observação docente · Escola Central · Dados demonstrativos</p>
+          <p className="mt-1 whitespace-nowrap text-xs text-slate-600">Apoio Ã  observaÃ§Ã£o docente Â· Escola Central Â· Dados demonstrativos</p>
         </div>
         <button onClick={() => setPaginaAtual('login')} aria-label="Sair" className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
       </header>
@@ -146,22 +150,22 @@ function App() {
           <div className="flex items-center gap-3 px-2 pb-8">
             <div className="brand-icon flex h-[54px] w-[54px] items-center justify-center rounded-2xl bg-[#eaf3ff] text-[#2875df]"><img src={aprenderIcon} alt="" className="drawer-brand-icon" /></div>
             <div><p className="text-[20px] font-bold tracking-wide text-slate-800">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">Painel escolar</p></div>
-            <button className="ml-auto self-start text-slate-400 md:hidden" onClick={() => setMenuAberto(false)} aria-label="Fechar menu">×</button>
+            <button className="ml-auto self-start text-slate-400 md:hidden" onClick={() => setMenuAberto(false)} aria-label="Fechar menu">Ã—</button>
           </div>
           <p className="mb-2 px-3 text-[12px] font-medium uppercase tracking-[.08em] text-slate-400">Menu principal</p>
-          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }) => <button key={id} onClick={() => { setPaginaAtual(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}</button>)}</nav>
+          <nav className="drawer-nav flex-1 space-y-1" aria-label="NavegaÃ§Ã£o principal">{paginas.map(({ id, nome, icone }) => <button key={id} onClick={() => { setPaginaAtual(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}</button>)}</nav>
           <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">{(perfil || 'AC').slice(0, 2).toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{perfil || 'Alex Chen'}</p><p className="mt-1 text-sm text-slate-500">Perfil selecionado</p></div></div>
         </aside>
       </div>}
 
       <div className="app-content mx-auto max-w-[1500px]">
-        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Componente /> : <p className="text-sm text-slate-600">Esta seção estará disponível em breve.</p>}</section> })()}
+        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Componente /> : <p className="text-sm text-slate-600">Esta seÃ§Ã£o estarÃ¡ disponÃ­vel em breve.</p>}</section> })()}
         {paginaAtual === 'visao' && <>
         <section aria-label="Indicadores" className="dashboard-stats mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[
             { label: 'Alunos', value: '1.248', badge: '42 turmas', icon: alunosResumoIcon },
-            { label: 'Frequência média', value: '94,8%', badge: 'Visão complementar', icon: calendarioIcon },
-            { label: 'Registros docentes', value: String(observacoes.length), badge: 'Neste período', icon: registrosIcon },
+            { label: 'FrequÃªncia mÃ©dia', value: '94,8%', badge: 'VisÃ£o complementar', icon: calendarioIcon },
+            { label: 'Registros docentes', value: String(observacoes.length), badge: 'Neste perÃ­odo', icon: registrosIcon },
           ].map((card) => <article key={card.label} className="flex min-h-[82px] items-center justify-between rounded-xl border border-[#d9e1eb] bg-white px-4 py-3 shadow-[0_2px_5px_rgba(15,23,42,0.04)]">
             <div><p className="text-[12px] font-medium">{card.label}</p><div className="mt-1.5 flex items-center gap-2.5"><strong className="text-[24px] leading-none tracking-tight text-slate-950">{card.value}</strong><span className="rounded bg-[#e9f6f0] px-2 py-1 text-[10px] text-[#138466]">{card.badge}</span></div></div>
             <span className="flex h-[32px] w-[32px] items-center justify-center rounded-lg bg-[#eaf3ff]"><img src={card.icon} alt="" className="dashboard-stat-icon" /></span>
@@ -170,31 +174,31 @@ function App() {
 
         <div className="dashboard-panels grid items-stretch gap-5 lg:grid-cols-2">
           <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
-            <h2 className="text-[14px] font-bold">Registros por característica</h2>
-            <p className="mt-3 text-[15px] text-slate-800">Selecione as dimensões que deseja considerar nesta leitura.</p>
+            <h2 className="text-[14px] font-bold">Registros por caracterÃ­stica</h2>
+            <p className="mt-3 text-[15px] text-slate-800">Selecione as dimensÃµes que deseja considerar nesta leitura.</p>
             <div className="my-4 flex flex-wrap gap-x-4 gap-y-2">
               {dimensoesIniciais.map(({ nome }) => <label key={nome} className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-600"><input type="checkbox" checked={selecionadas.includes(nome)} onChange={() => alternarDimensao(nome)} className="h-4 w-4 accent-blue-600" />{nome}</label>)}
             </div>
             <div className="space-y-3.5">
               {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome, total }) => <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${total ? 24 : 0}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>)}
             </div>
-            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Os dados são demonstrativos. As observações devem ser registradas pela equipe docente.</div>
+            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Os dados sÃ£o demonstrativos. As observaÃ§Ãµes devem ser registradas pela equipe docente.</div>
           </section>
 
           <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
-            <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">Observações recentes</h2><button onClick={() => setModalAberto(true)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
+            <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">ObservaÃ§Ãµes recentes</h2><button onClick={() => setModalAberto(true)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
             <div>{observacoes.map((obs, index) => <article key={`${obs.nome}-${index}`} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
               <h3 className="text-[15px] font-bold text-[#1760b5]">{obs.nome}</h3>
-              <p className="mt-0.5 text-[11px] text-slate-500">{obs.turma} · {obs.data} · {obs.dimensao}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">{obs.turma} Â· {obs.data} Â· {obs.dimensao}</p>
               <p className="mt-3 text-[12px] leading-[18px] text-slate-600">{obs.descricao}</p>
-              {obs.proximo && <p className="mt-3 text-[12px] leading-[18px] text-slate-600"><strong className="text-slate-800">Próximo passo:</strong><br />{obs.proximo}</p>}
+              {obs.proximo && <p className="mt-3 text-[12px] leading-[18px] text-slate-600"><strong className="text-slate-800">PrÃ³ximo passo:</strong><br />{obs.proximo}</p>}
             </article>)}</div>
           </section>
         </div>
         </>}
       </div>
 
-      {modalAberto && <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalAberto(false) }}><form onSubmit={adicionarObservacao} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-bold">Novo registro</h2><button type="button" onClick={() => setModalAberto(false)} className="text-xl text-slate-500" aria-label="Fechar">×</button></div><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Aluno<input name="aluno" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Nome do aluno" /></label><label className="text-sm font-medium">Turma<input name="turma" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Ex.: 9º A" /></label><label className="text-sm font-medium sm:col-span-2">Dimensão<select name="dimensao" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">{dimensoesIniciais.map(({ nome }) => <option key={nome}>{nome}</option>)}</select></label><label className="text-sm font-medium sm:col-span-2">Observação<textarea name="descricao" required rows="3" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Descreva o que foi observado" /></label><label className="text-sm font-medium sm:col-span-2">Próximo passo (opcional)<input name="proximo" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Ação para acompanhar" /></label></div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setModalAberto(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button><button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Salvar registro</button></div></form></div>}
+      {modalAberto && <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalAberto(false) }}><form onSubmit={adicionarObservacao} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-bold">Novo registro</h2><button type="button" onClick={() => setModalAberto(false)} className="text-xl text-slate-500" aria-label="Fechar">Ã—</button></div><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Aluno<input name="aluno" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Nome do aluno" /></label><label className="text-sm font-medium">Turma<input name="turma" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Ex.: 9Âº A" /></label><label className="text-sm font-medium sm:col-span-2">DimensÃ£o<select name="dimensao" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">{dimensoesIniciais.map(({ nome }) => <option key={nome}>{nome}</option>)}</select></label><label className="text-sm font-medium sm:col-span-2">ObservaÃ§Ã£o<textarea name="descricao" required rows="3" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Descreva o que foi observado" /></label><label className="text-sm font-medium sm:col-span-2">PrÃ³ximo passo (opcional)<input name="proximo" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="AÃ§Ã£o para acompanhar" /></label></div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setModalAberto(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button><button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Salvar registro</button></div></form></div>}
     </main>
   )
 }
