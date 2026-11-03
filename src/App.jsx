@@ -17,6 +17,8 @@ import './App.css'
 const Login = lazy(() => import('./components/Login.jsx'))
 const Alunos = lazy(() => import('./components/alunos.jsx'))
 const Professor = lazy(() => import('./components/professor.jsx'))
+const CatalogoAcademico = lazy(() => import('./components/CatalogoAcademico.jsx'))
+import { cursos as cursosAcademicos, alunos as alunosAcademicos } from './data/dadosAcademicos.js'
 const Coordenador = lazy(() => import('./components/coodernador.jsx'))
 const Aprendizagem = lazy(() => import('./components/aprendizagem.jsx'))
 const Desempenho = lazy(() => import('./components/desempenho.jsx'))
@@ -77,6 +79,7 @@ function App() {
   const [selecionadas, setSelecionadas] = useState(dimensoesIniciais.map(({ nome }) => nome))
   const [observacoes, setObservacoes] = useState(observacoesIniciais)
   const [modalAberto, setModalAberto] = useState(false)
+  const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
 
   useEffect(() => {
     if (!window.history.state?.pagina) window.history.replaceState({ pagina: 'login' }, '')
@@ -87,8 +90,9 @@ function App() {
     return () => window.removeEventListener('popstate', sincronizarPagina)
   }, [])
 
-  function navegar(pagina) {
+  function navegar(pagina, curso = cursoSelecionado) {
     if (pagina === paginaAtual) return
+    setCursoSelecionado(curso)
     window.history.pushState({ pagina }, '')
     setPaginaAtual(pagina)
   }
@@ -146,7 +150,7 @@ function App() {
   }
 
   if (paginaAtual === 'aluno') return <Suspense fallback={carregando}><PerfilPage Componente={Alunos} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
-  if (paginaAtual === 'professor') return <Suspense fallback={carregando}><PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={() => navegar('visao')} /></Suspense>
+  if (paginaAtual === 'professor') return <Suspense fallback={carregando}><PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>
   if (paginaAtual === 'coordenador') return <Suspense fallback={carregando}><PerfilPage Componente={Coordenador} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
 
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
@@ -157,7 +161,7 @@ function App() {
         <button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button>
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-center">
           <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{paginaSelecionada?.nome}</h1>
-          <p className="mt-1 whitespace-nowrap text-xs text-slate-600">Apoio à observação docente · Escola Central · Dados demonstrativos</p>
+          <p className="mt-1 whitespace-nowrap text-xs text-slate-600">{paginaAtual === 'visao' ? cursoSelecionado.nome : 'Apoio à observação docente · Escola Central'}</p>
         </div>
         <button onClick={() => navegar('login')} aria-label="Sair" className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
       </header>
@@ -177,18 +181,20 @@ function App() {
       </div>}
 
       <div className="app-content mx-auto max-w-[1500px]">
-        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Suspense fallback={carregando}><Componente /></Suspense> : <p className="text-sm text-slate-600">Esta seção estará disponível em breve.</p>}</section> })()}
+        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Suspense fallback={carregando}><Componente /></Suspense> : <Suspense fallback={carregando}><CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>}</section> })()}
         {paginaAtual === 'visao' && <>
         <section aria-label="Indicadores" className="dashboard-stats mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[
-            { label: 'Alunos', value: '1.248', badge: '42 turmas', icon: alunosResumoIcon },
-            { label: 'Frequência média', value: '94,8%', badge: 'Visão complementar', icon: calendarioIcon },
-            { label: 'Registros docentes', value: String(observacoes.length), badge: 'Neste período', icon: registrosIcon },
+            { label: 'Alunos matriculados', value: String(cursoSelecionado.alunos), badge: 'Neste curso', icon: alunosResumoIcon },
+            { label: 'Carga horária', value: cursoSelecionado.carga, badge: cursoSelecionado.status, icon: calendarioIcon },
+            { label: 'Registros locais', value: String(observacoes.length), badge: 'Esta sessão', icon: registrosIcon },
           ].map((card) => <article key={card.label} className="flex min-h-[82px] items-center justify-between rounded-xl border border-[#d9e1eb] bg-white px-4 py-3 shadow-[0_2px_5px_rgba(15,23,42,0.04)]">
             <div><p className="text-[12px] font-medium">{card.label}</p><div className="mt-1.5 flex items-center gap-2.5"><strong className="text-[24px] leading-none tracking-tight text-slate-950">{card.value}</strong><span className="rounded bg-[#e9f6f0] px-2 py-1 text-[10px] text-[#138466]">{card.badge}</span></div></div>
             <span className="flex h-[32px] w-[32px] items-center justify-center rounded-lg bg-[#eaf3ff]"><img src={card.icon} alt="" className="dashboard-stat-icon" /></span>
           </article>)}
         </section>
+
+        <section className="mb-5 rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Curso selecionado</p><h2 className="mt-1 text-xl font-bold">{cursoSelecionado.nome}</h2><p className="mt-2 max-w-3xl text-sm text-slate-600">{cursoSelecionado.descricao}</p></div><div className="flex gap-3 text-sm"><span className="rounded-lg bg-slate-50 px-3 py-2"><strong>{cursoSelecionado.carga}</strong><br />Carga horária</span><span className="rounded-lg bg-slate-50 px-3 py-2"><strong>{cursoSelecionado.professor || 'Não informado'}</strong><br />Responsável</span></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-600">Selecionar curso<select value={cursoSelecionado.id} onChange={(event) => setCursoSelecionado(cursosAcademicos.find((curso) => curso.id === Number(event.target.value)))} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800">{cursosAcademicos.map((curso) => <option key={curso.id} value={curso.id}>{curso.nome}</option>)}</select></label><div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">Notas, frequência, entregas, disciplinas e turmas não estão cadastradas. Indicadores correspondentes ficam indisponíveis até haver dados acadêmicos integrados.</div></div></section>
 
         <div className="dashboard-panels grid items-stretch gap-5 lg:grid-cols-2">
           <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
@@ -198,19 +204,19 @@ function App() {
               {dimensoesIniciais.map(({ nome }) => <label key={nome} className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-600"><input type="checkbox" checked={selecionadas.includes(nome)} onChange={() => alternarDimensao(nome)} className="h-4 w-4 accent-blue-600" />{nome}</label>)}
             </div>
             <div className="space-y-3.5">
-              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome, total }) => <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${total ? 24 : 0}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>)}
+              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome }) => { const total = observacoes.filter((observacao) => observacao.dimensao === nome).length; return <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.min(100, total * 20)}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>})}
             </div>
-            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Os dados são demonstrativos. As observações devem ser registradas pela equipe docente.</div>
+            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Contagem das observações cadastradas nesta sessão. Sem histórico acadêmico integrado.</div>
           </section>
 
           <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
             <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">Observações recentes</h2><button onClick={() => setModalAberto(true)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
-            <div>{observacoes.map((obs, index) => <article key={`${obs.nome}-${index}`} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
+            <div>{observacoes.filter((obs) => alunosAcademicos.some((aluno) => aluno.nome === obs.nome && aluno.curso === cursoSelecionado.nome)).map((obs, index) => <article key={`${obs.nome}-${index}`} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
               <h3 className="text-[15px] font-bold text-[#1760b5]">{obs.nome}</h3>
               <p className="mt-0.5 text-[11px] text-slate-500">{obs.turma} · {obs.data} · {obs.dimensao}</p>
               <p className="mt-3 text-[12px] leading-[18px] text-slate-600">{obs.descricao}</p>
               {obs.proximo && <p className="mt-3 text-[12px] leading-[18px] text-slate-600"><strong className="text-slate-800">Próximo passo:</strong><br />{obs.proximo}</p>}
-            </article>)}</div>
+            </article>)}{observacoes.filter((obs) => alunosAcademicos.some((aluno) => aluno.nome === obs.nome && aluno.curso === cursoSelecionado.nome)).length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nenhum registro local para os alunos deste curso.</p>}</div>
           </section>
         </div>
         </>}
