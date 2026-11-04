@@ -97,6 +97,20 @@ function App() {
     setPaginaAtual(pagina)
   }
 
+  useEffect(() => {
+    function tratarAtalho(event) {
+      if (event.altKey && /^[1-5]$/.test(event.key)) {
+        event.preventDefault()
+        const pagina = paginas[Number(event.key) - 1].id
+        window.history.pushState({ pagina }, '')
+        setPaginaAtual(pagina)
+      }
+      if (event.key === 'Escape') setMenuAberto(false)
+    }
+    window.addEventListener('keydown', tratarAtalho)
+    return () => window.removeEventListener('keydown', tratarAtalho)
+  }, [])
+
   function alternarDimensao(nome) {
     setSelecionadas((atuais) => atuais.includes(nome) ? atuais.filter((item) => item !== nome) : [...atuais, nome])
   }
@@ -158,7 +172,7 @@ function App() {
   return (
     <main className="dashboard min-h-screen bg-[#f7f9fc] px-5 py-6 text-[#10213a] sm:px-8">
       <header className="relative mx-auto mb-7 flex max-w-[1500px] items-start justify-between">
-        <button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button>
+        <div className="mt-1 flex gap-2"><button onClick={() => window.history.back()} aria-label="Voltar à página anterior" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg text-slate-600 hover:bg-slate-50">‹</button><button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button></div>
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-center">
           <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{paginaSelecionada?.nome}</h1>
           <p className="mt-1 whitespace-nowrap text-xs text-slate-600">{paginaAtual === 'visao' ? cursoSelecionado.nome : 'Apoio à observação docente · Escola Central'}</p>
@@ -175,7 +189,7 @@ function App() {
             <button className="ml-auto self-start text-slate-400 md:hidden" onClick={() => setMenuAberto(false)} aria-label="Fechar menu">×</button>
           </div>
           <p className="mb-2 px-3 text-[12px] font-medium uppercase tracking-[.08em] text-slate-400">Menu principal</p>
-          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }) => <button key={id} onClick={() => { navegar(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}</button>)}</nav>
+          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }, index) => <button key={id} onClick={() => { navegar(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} title={`Atalho Alt+${index + 1}`} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}<span className="ml-auto text-[10px] font-medium text-slate-400">Alt+{index + 1}</span></button>)}</nav>
           <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">{(perfil || 'AC').slice(0, 2).toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{perfil || 'Alex Chen'}</p><p className="mt-1 text-sm text-slate-500">Perfil selecionado</p></div></div>
         </aside>
       </div>}

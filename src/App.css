@@ -78,6 +78,12 @@
 @media (max-width: 640px) {
   .app-content { padding-top: 8px; }
   .component-page { min-height: 60vh; padding: 18px; }
+  .dashboard > header { min-height: 44px; }
+  .dashboard > header > div { max-width: calc(100vw - 128px); overflow: hidden; }
+  .dashboard > header h1 { overflow: hidden; font-size: 20px; text-overflow: ellipsis; white-space: nowrap; }
+  .dashboard > header p { overflow: hidden; text-overflow: ellipsis; }
+  .dashboard-stats { gap: 10px; }
+  .dashboard-panels { gap: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
