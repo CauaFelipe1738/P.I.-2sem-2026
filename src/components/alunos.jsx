@@ -1,4 +1,5 @@
-﻿export default function Alunos() {
+// Placeholder visual: a área ainda não consome dados acadêmicos institucionais.
+export default function Alunos() {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Área do aluno</p>

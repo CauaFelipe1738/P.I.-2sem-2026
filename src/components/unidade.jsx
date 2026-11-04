@@ -1,4 +1,5 @@
-﻿export default function Unidade() {
+// Placeholder visual: a área ainda não consome dados acadêmicos institucionais.
+export default function Unidade() {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Unidade escolar</p>

@@ -1,4 +1,5 @@
-﻿export default function Coordenador() {
+// Placeholder visual: a área ainda não consome dados acadêmicos institucionais.
+export default function Coordenador() {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Área da coordenação</p>

@@ -1,3 +1,4 @@
+/* Entrada discreta do menu; a preferência por movimento reduzido é respeitada no fim do arquivo. */
 .drawer-layer {
   animation: drawer-fade-in 160ms ease-out;
 }
@@ -72,6 +73,7 @@
 }
 
 @media (min-width: 1024px) and (min-height: 700px) {
+  /* Os painéis da Visão Geral ocupam mais altura em telas desktop. */
   .dashboard-card { min-height: 440px; padding: 20px; }
 }
 
