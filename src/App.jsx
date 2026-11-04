@@ -27,7 +27,7 @@ import Frequencia from './components/frequencia.jsx'
 import Relatorio from './components/relatorio.jsx'
 import { cursos as cursosAcademicos, alunos as alunosAcademicos } from './data/dadosAcademicos.js'
 const Coordenador = lazy(() => import('./components/coodernador.jsx'))
-const carregando = <div className="px-4 py-8 text-center text-sm text-slate-500" role="status">Carregando…</div>
+const carregando = <div className="loading-screen" role="status" aria-label="Carregando"><span className="loading-spinner" aria-hidden="true" /></div>
 
 // Este mapa alimenta o menu principal e associa cada rota ao seu componente.
 const paginas = [
