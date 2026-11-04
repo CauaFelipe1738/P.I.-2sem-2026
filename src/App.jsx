@@ -14,17 +14,19 @@ import professorFoto from './assets/otimizadas/professor.jpg'
 import coordenacaoFoto from './assets/otimizadas/diretor.jpg'
 import './App.css'
 
-// Carregamento sob demanda reduz o código inicial enviado ao navegador.
+// Telas externas ao painel são carregadas sob demanda.
 const Login = lazy(() => import('./components/Login.jsx'))
 const Alunos = lazy(() => import('./components/alunos.jsx'))
 const Professor = lazy(() => import('./components/professor.jsx'))
-const CatalogoAcademico = lazy(() => import('./components/CatalogoAcademico.jsx'))
+// As páginas do menu são importadas junto com o painel para evitar uma tela
+// de carregamento na primeira visita a cada opção.
+import CatalogoAcademico from './components/CatalogoAcademico.jsx'
+import Aprendizagem from './components/aprendizagem.jsx'
+import Desempenho from './components/desempenho.jsx'
+import Frequencia from './components/frequencia.jsx'
+import Relatorio from './components/relatorio.jsx'
 import { cursos as cursosAcademicos, alunos as alunosAcademicos } from './data/dadosAcademicos.js'
 const Coordenador = lazy(() => import('./components/coodernador.jsx'))
-const Aprendizagem = lazy(() => import('./components/aprendizagem.jsx'))
-const Desempenho = lazy(() => import('./components/desempenho.jsx'))
-const Frequencia = lazy(() => import('./components/frequencia.jsx'))
-const Relatorio = lazy(() => import('./components/relatorio.jsx'))
 const carregando = <div className="px-4 py-8 text-center text-sm text-slate-500" role="status">Carregando…</div>
 
 // Este mapa alimenta o menu principal e associa cada rota ao seu componente.
@@ -109,14 +111,16 @@ function App() {
       if (event.altKey && /^[1-5]$/.test(event.key)) {
         event.preventDefault()
         const pagina = paginas[Number(event.key) - 1].id
-        window.history.pushState({ pagina }, '')
-        setPaginaAtual(pagina)
+        if (pagina !== paginaAtual) {
+          window.history.pushState({ pagina }, '')
+          setPaginaAtual(pagina)
+        }
       }
       if (event.key === 'Escape') setMenuAberto(false)
     }
     window.addEventListener('keydown', tratarAtalho)
     return () => window.removeEventListener('keydown', tratarAtalho)
-  }, [])
+  }, [paginaAtual])
 
   function alternarDimensao(nome) {
     setSelecionadas((atuais) => atuais.includes(nome) ? atuais.filter((item) => item !== nome) : [...atuais, nome])
@@ -205,7 +209,7 @@ function App() {
       </div>}
 
       <div className="app-content mx-auto max-w-[1500px]">
-        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Suspense fallback={carregando}><Componente /></Suspense> : <Suspense fallback={carregando}><CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>}</section> })()}
+        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Componente /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}</section> })()}
         {/* A Visão Geral continua usando observações locais do protótipo; os dados acadêmicos ausentes não são estimados. */}
         {/* Os dados acadêmicos ausentes são sinalizados; não são calculados a partir de estimativas. */}
         {paginaAtual === 'visao' && <>
