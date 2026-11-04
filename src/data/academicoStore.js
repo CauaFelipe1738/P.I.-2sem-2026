@@ -30,12 +30,9 @@ export function addLearning(record) { saveAcademicData({ ...state, learning: [re
 export function updateLearning(id, updates) { saveAcademicData({ ...state, learning: state.learning.map((row) => row.id === id ? { ...row, ...updates, history: [...(row.history || []), { at: new Date().toISOString(), previous: row }], updatedAt: new Date().toISOString() } : row) }) }
 
 // Checklists definem os valores canônicos usados por formulários e indicadores.
-export const turmas = ['Turma A', 'Turma B']
-export const disciplinas = ['Desenvolvimento Web', 'Lógica de Programação', 'Banco de Dados']
 export const checklistAprendizagem = ['Compreendeu o conteúdo', 'Realizou atividades sozinho', 'Necessitou de auxílio', 'Demonstrou evolução', 'Participou das atividades', 'Apresentou dificuldade', 'Desenvolveu habilidade esperada']
 export const checklistAula = ['Participou da aula', 'Realizou as atividades propostas', 'Participou em grupo', 'Apresentou dificuldade', 'Necessitou de acompanhamento', 'Entregou atividade solicitada']
 
 export function optionsForCourse(courseName, students) {
-  const courseStudents = students.filter((student) => student.curso === courseName)
-  return { students: courseStudents, classes: turmas, subjects: disciplinas }
+  return students.filter((student) => student.curso === courseName)
 }

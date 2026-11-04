@@ -16,7 +16,7 @@ export default function Frequencia() {
   const [editing, setEditing] = useState(null)
   const [message, setMessage] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
-  const { students } = optionsForCourse(course.nome, alunos)
+  const students = optionsForCourse(course.nome, alunos)
   // Os filtros são combinados sobre as chamadas do curso selecionado.
   const sessions = data.attendance.filter((session) => session.courseId === course.id && (!className || session.className === className) && (!subject || session.subject === subject) && (!period || session.date.startsWith(period)))
   const entries = sessions.flatMap((session) => session.students.map((student) => ({ ...student, session })))

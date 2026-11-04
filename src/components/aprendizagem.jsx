@@ -16,7 +16,7 @@ export default function Aprendizagem() {
   const [planForm, setPlanForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
-  const { students } = optionsForCourse(course.nome, alunos)
+  const students = optionsForCourse(course.nome, alunos)
   // Observações e planos usam os mesmos registros para compor o histórico individual.
   const records = data.learning.filter((item) => item.courseId === course.id && (!studentId || item.studentId === studentId) && (!subject || item.subject === subject))
   const plans = records.filter((item) => item.plan)
