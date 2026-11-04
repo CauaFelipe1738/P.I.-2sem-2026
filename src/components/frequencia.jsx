@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { alunos, cursos } from '../data/dadosAcademicos.js'
 import { addAttendance, checklistAula, optionsForCourse, updateAttendance, useAcademicData } from '../data/academicoStore.js'
 
+// Classes utilitárias comuns mantêm os campos e indicadores visualmente consistentes.
 const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800'
 const pill = 'rounded-lg border border-slate-200 bg-white p-4'
 
@@ -16,6 +17,7 @@ export default function Frequencia() {
   const [message, setMessage] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
   const { students } = optionsForCourse(course.nome, alunos)
+  // Os filtros são combinados sobre as chamadas do curso selecionado.
   const sessions = data.attendance.filter((session) => session.courseId === course.id && (!className || session.className === className) && (!subject || session.subject === subject) && (!period || session.date.startsWith(period)))
   const entries = sessions.flatMap((session) => session.students.map((student) => ({ ...student, session })))
   const present = entries.filter((row) => row.status === 'Presente' || row.status === 'Atraso').length
@@ -26,12 +28,14 @@ export default function Frequencia() {
   function saveSession(event) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
+    // Na edição, limita a correção aos alunos que já faziam parte daquela chamada.
     const rows = students.filter((student) => !editing || editing.students.some((row) => row.studentId === student.id)).map((student) => ({ studentId: student.id, name: student.nome, status: form.get(`status-${student.id}`) || 'Presente', reason: form.get(`reason-${student.id}`) || '', checks: checklistAula.filter((_, index) => form.get(`check-${student.id}-${index}`)), note: form.get(`note-${student.id}`) || '' }))
     const session = { id: editing?.id || crypto.randomUUID(), courseId: course.id, courseName: course.nome, className, subject, date: form.get('date'), lesson: form.get('lesson'), students: rows, createdAt: editing?.createdAt || new Date().toISOString() }
     if (editing) { updateAttendance(editing.id, session); setMessage('Registro atualizado.') } else { addAttendance(session); setMessage('Frequência salva.') }
     setEditing(null)
   }
 
+  // A taxa considera presente e atraso como comparecimento; justificativas não contam como presença.
   return <div className="space-y-5 text-[#10213a]">
     <header><h3 className="text-xl font-bold">Controle de frequência</h3><p className="mt-1 text-sm text-slate-600">Registre presenças por aula, consulte o histórico e corrija lançamentos.</p></header>
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><article className={pill}><p className="text-xs text-slate-500">Presença nas aulas registradas</p><strong className="mt-1 block text-2xl">{rate === null ? '—' : `${rate}%`}</strong></article><article className={pill}><p className="text-xs text-slate-500">Faltas e faltas justificadas</p><strong className="mt-1 block text-2xl">{absent}</strong></article><article className={pill}><p className="text-xs text-slate-500">Aulas registradas</p><strong className="mt-1 block text-2xl">{sessions.length}</strong></article><article className={pill}><p className="text-xs text-slate-500">Alunos abaixo de 75%</p><strong className="mt-1 block text-2xl">{students.filter((student) => { const rows = entries.filter((row) => row.studentId === student.id); return rows.length > 0 && rows.filter((row) => row.status === 'Presente' || row.status === 'Atraso').length / rows.length < 0.75 }).length}</strong></article></div>

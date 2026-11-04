@@ -1,3 +1,4 @@
+// Lista compacta usada quando se abre a página de catálogo pelo menu acadêmico.
 import { cursos } from '../data/dadosAcademicos.js'
 
 export default function CatalogoAcademico({ onAbrirVisaoGeral = () => {} }) {

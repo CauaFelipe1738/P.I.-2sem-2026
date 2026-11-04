@@ -1,5 +1,6 @@
 ﻿import { useMemo, useState } from 'react'
 import aprenderIcon from '../assets/aprender.png'
+// O catálogo é compartilhado com os filtros das demais áreas acadêmicas.
 import { cursos, alunos } from '../data/dadosAcademicos.js'
 
 export function CatalogoAcademico({ onAbrirVisaoGeral = () => {} }) {
@@ -15,6 +16,7 @@ function SearchIcon({ className = 'size-4' }) {
 }
 
 export default function Professor({ onAbrirVisaoGeral = () => {} }) {
+  // Filtros e paginação locais preservam a navegação do catálogo sem alterar os registros.
   const [busca, setBusca] = useState('')
   const [status, setStatus] = useState('Todos')
   const [ordenacao, setOrdenacao] = useState('Nome (A-Z)')
@@ -24,6 +26,7 @@ export default function Professor({ onAbrirVisaoGeral = () => {} }) {
   const [verTodosAlunos, setVerTodosAlunos] = useState(false)
 
   const meusCursos = cursos
+  // Combina busca e situação antes de ordenar a página visível.
   const cursosFiltrados = useMemo(() => meusCursos.filter((curso) => {
     const texto = `${curso.nome} ${curso.descricao}`.toLocaleLowerCase('pt-BR')
     return texto.includes(busca.toLocaleLowerCase('pt-BR')) && (status === 'Todos' || curso.status === status)

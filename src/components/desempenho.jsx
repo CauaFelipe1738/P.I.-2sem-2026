@@ -13,12 +13,14 @@ export default function Desempenho() {
   const [evaluation, setEvaluation] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
   const students = alunos.filter((item) => item.curso === course.nome)
+  // Indicadores de desempenho só usam dados de frequência e aprendizagem atualmente existentes.
   const sessions = useMemo(() => data.attendance.filter((row) => row.courseId === course.id && (!className || row.className === className) && (!subject || row.subject === subject) && (!period || row.date.startsWith(period))).flatMap((row) => row.students.map((student) => ({ ...student, date: row.date, subject: row.subject, className: row.className }))), [data.attendance, course.id, className, subject, period])
   const learning = data.learning.filter((row) => row.courseId === course.id && (!studentId || row.studentId === studentId) && (!subject || row.subject === subject) && (!period || row.date.startsWith(period)))
   const activeStudents = students.filter((student) => sessions.some((row) => row.studentId === student.id))
   const attendanceRate = sessions.length ? Math.round(100 * sessions.filter((row) => ['Presente', 'Atraso'].includes(row.status)).length / sessions.length) : null
   const activities = sessions.flatMap((row) => row.checks || [])
   const activityRate = activities.length ? Math.round(100 * activities.filter((item) => item === 'Entregou atividade solicitada').length / activities.length) : null
+  // Critério de atenção exibido na interface: presença abaixo de 75% ou dificuldade registrada.
   const risk = activeStudents.map((student) => {
     const rows = sessions.filter((row) => row.studentId === student.id)
     const presentRate = rows.length ? rows.filter((row) => ['Presente', 'Atraso'].includes(row.status)).length / rows.length : 1

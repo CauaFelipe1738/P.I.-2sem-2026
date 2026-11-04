@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { alunos, cursos } from '../data/dadosAcademicos.js'
 import { addLearning, checklistAprendizagem, optionsForCourse, updateLearning, useAcademicData } from '../data/academicoStore.js'
 
+// Base visual comum dos campos desta área.
 const field = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm'
 const emptyForm = { difficulty: '', goal: '', action: '', startDate: new Date().toISOString().slice(0, 10), dueDate: '', status: 'Pendente', result: '' }
 
@@ -16,6 +17,7 @@ export default function Aprendizagem() {
   const [message, setMessage] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
   const { students } = optionsForCourse(course.nome, alunos)
+  // Observações e planos usam os mesmos registros para compor o histórico individual.
   const records = data.learning.filter((item) => item.courseId === course.id && (!studentId || item.studentId === studentId) && (!subject || item.subject === subject))
   const plans = records.filter((item) => item.plan)
   const activePlans = plans.filter((item) => item.plan.status !== 'Concluído')
@@ -24,6 +26,7 @@ export default function Aprendizagem() {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const student = students.find((item) => item.id === form.get('studentId'))
+    // A edição mantém o plano relacionado e a data original de criação.
     const record = { id: editingId || crypto.randomUUID(), courseId: course.id, courseName: course.nome, studentId: student.id, studentName: student.nome, subject, date: form.get('date'), category, checks: checklistAprendizagem.filter((_, index) => form.get(`check-${index}`)), description: form.get('description'), action: form.get('action'), teacher: form.get('teacher') || 'Professor', plan: editingId ? data.learning.find((item) => item.id === editingId)?.plan || null : null, createdAt: editingId ? data.learning.find((item) => item.id === editingId)?.createdAt : new Date().toISOString() }
     if (editingId) { updateLearning(editingId, record); setMessage('Observação atualizada.') } else { addLearning(record); setMessage('Observação pedagógica registrada.') }
     setEditingId(null)
@@ -35,6 +38,7 @@ export default function Aprendizagem() {
     const form = new FormData(event.currentTarget)
     const student = students.find((item) => item.id === form.get('studentId'))
     const plan = Object.fromEntries(['difficulty', 'goal', 'action', 'startDate', 'dueDate', 'status', 'result'].map((key) => [key, form.get(key)]))
+    // Mantém no máximo um plano ativo por aluno e curso, atualizando-o quando já existe.
     const existing = plans.find((item) => item.studentId === student.id)
     if (existing) updateLearning(existing.id, { plan })
     else addLearning({ id: crypto.randomUUID(), courseId: course.id, courseName: course.nome, studentId: student.id, studentName: student.nome, subject, date: plan.startDate, category: 'Plano de acompanhamento', description: plan.difficulty, checks: [], action: plan.action, teacher: 'Professor', plan, createdAt: new Date().toISOString() })

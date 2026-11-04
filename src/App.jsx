@@ -14,6 +14,7 @@ import professorFoto from './assets/otimizadas/professor.jpg'
 import coordenacaoFoto from './assets/otimizadas/diretor.jpg'
 import './App.css'
 
+// Carregamento sob demanda reduz o código inicial enviado ao navegador.
 const Login = lazy(() => import('./components/Login.jsx'))
 const Alunos = lazy(() => import('./components/alunos.jsx'))
 const Professor = lazy(() => import('./components/professor.jsx'))
@@ -26,6 +27,7 @@ const Frequencia = lazy(() => import('./components/frequencia.jsx'))
 const Relatorio = lazy(() => import('./components/relatorio.jsx'))
 const carregando = <div className="px-4 py-8 text-center text-sm text-slate-500" role="status">Carregando…</div>
 
+// Este mapa alimenta o menu principal e associa cada rota ao seu componente.
 const paginas = [
   { id: 'visao', nome: 'Visão geral', icone: visaoIcon },
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
@@ -34,6 +36,7 @@ const paginas = [
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
 ]
 
+// Opções compartilhadas entre os gráficos de observações e o formulário local.
 const dimensoesIniciais = [
   { nome: 'Participação', total: 0 },
   { nome: 'Engajamento', total: 0 },
@@ -43,6 +46,7 @@ const dimensoesIniciais = [
   { nome: 'Estratégias', total: 0 },
 ]
 
+// Conteúdo demonstrativo do protótipo; não representa registros persistidos no backend.
 const observacoesIniciais = [
   {
     nome: 'Sarah Jensen', turma: '9º A', data: '24 set', dimensao: 'Participação',
@@ -73,6 +77,7 @@ function Icon({ type, size = 20 }) {
 }
 
 function App() {
+  // A navegação é controlada pelo estado da aplicação e sincronizada com o histórico do navegador.
   const [paginaAtual, setPaginaAtual] = useState('login')
   const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
@@ -82,6 +87,7 @@ function App() {
   const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
 
   useEffect(() => {
+    // Atualiza a tela quando o usuário usa voltar/avançar do navegador.
     if (!window.history.state?.pagina) window.history.replaceState({ pagina: 'login' }, '')
     const sincronizarPagina = (event) => {
       if (event.state?.pagina) setPaginaAtual(event.state.pagina)
@@ -98,6 +104,7 @@ function App() {
   }
 
   useEffect(() => {
+    // Alt+1…5 abre as páginas na ordem do menu; Escape fecha o drawer.
     function tratarAtalho(event) {
       if (event.altKey && /^[1-5]$/.test(event.key)) {
         event.preventDefault()
@@ -126,6 +133,7 @@ function App() {
     setModalAberto(false)
   }
 
+  // Login e escolha de perfil são telas externas ao shell acadêmico.
   if (paginaAtual === 'login') {
     return <div className="min-h-screen bg-slate-100 text-slate-900"><Suspense fallback={carregando}><Login onLogin={() => navegar('perfil')} /></Suspense></div>
   }
@@ -180,6 +188,8 @@ function App() {
         <button onClick={() => navegar('login')} aria-label="Sair" className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
       </header>
 
+      {/* Menu lateral compartilhado pelas áreas acadêmicas. */}
+      {/* Navegação lateral compartilhada pelas áreas do painel. */}
       {menuAberto && <div className="drawer-layer fixed inset-0 z-30">
         <button className="drawer-backdrop absolute inset-0 h-full w-full" aria-label="Fechar menu" onClick={() => setMenuAberto(false)} />
         <aside className="app-drawer absolute inset-y-0 left-0 flex w-[292px] max-w-[86vw] flex-col bg-white px-[14px] pb-4 pt-7 shadow-2xl" aria-label="Menu principal">
@@ -196,6 +206,8 @@ function App() {
 
       <div className="app-content mx-auto max-w-[1500px]">
         {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Suspense fallback={carregando}><Componente /></Suspense> : <Suspense fallback={carregando}><CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>}</section> })()}
+        {/* A Visão Geral continua usando observações locais do protótipo; os dados acadêmicos ausentes não são estimados. */}
+        {/* Os dados acadêmicos ausentes são sinalizados; não são calculados a partir de estimativas. */}
         {paginaAtual === 'visao' && <>
         <section aria-label="Indicadores" className="dashboard-stats mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 
 export default function Login({ onLogin }) {
+  // Estados locais alternam exibição da senha e recuperação sem mudar de rota.
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false)
 
   function handleSubmit(event) {
     event.preventDefault()
+    // Fluxo demonstrativo: não valida credenciais nem inicia sessão no backend.
     onLogin?.()
   }
 
@@ -87,6 +89,7 @@ export default function Login({ onLogin }) {
 }             
 
 function Brand() {
+  // Nome e marca existentes, compartilhados pelas telas públicas de acesso.
   return (
     <div className="mb-10 flex items-center justify-center gap-3.5">
       <div className="flex size-[53px] items-center justify-center rounded-2xl bg-[#e0edff] text-[#2474df]">
@@ -101,5 +104,6 @@ function Brand() {
 }
 
 function Footer() {
+  // Contexto institucional repetido no rodapé do login e da recuperação.
   return <footer className="mt-9 flex flex-wrap items-center justify-center gap-x-3 text-[13px] text-[#8998aa]"><span>Escola Central</span><span aria-hidden="true">·</span><span>Ambiente educacional</span></footer>
 }
