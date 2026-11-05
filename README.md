@@ -313,3 +313,8 @@ Periodo.estaVigente() compara a data atual com dataInicio e dataFim.
 - A plataforma deve estar posta em um serviço de nuvem para acesso remoto
 - Cada alteração de código enviada é testada automaticamente
 - O projeto está versionado promovendo a organização do projeto e sua rastreabilidade.
+
+## Solução Proposta
+*Link do site implementado*
+
+*Imagens/Prints da plataforma mostrando os dados e funcionamento
