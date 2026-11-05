@@ -4,10 +4,23 @@ export default function Login({ onLogin }) {
   // Estados locais alternam exibição da senha e recuperação sem mudar de rota.
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false)
+  const [lembrarEmail, setLembrarEmail] = useState(() => {
+    try { return Boolean(localStorage.getItem('edulytics.email-salvo')) } catch { return false }
+  })
+  const [emailSalvo, setEmailSalvo] = useState(() => {
+    try { return localStorage.getItem('edulytics.email-salvo') || '' } catch { return '' }
+  })
+  const [avisoRecuperacao, setAvisoRecuperacao] = useState('')
 
   function handleSubmit(event) {
     event.preventDefault()
-    // Fluxo demonstrativo: não valida credenciais nem inicia sessão no backend.
+    const email = new FormData(event.currentTarget).get('email')
+    try {
+      if (lembrarEmail) localStorage.setItem('edulytics.email-salvo', email)
+      else localStorage.removeItem('edulytics.email-salvo')
+    } catch { /* O protótipo continua acessível se o navegador bloquear o armazenamento. */ }
+    setEmailSalvo(lembrarEmail ? email : '')
+    // Fluxo demonstrativo: credenciais são obrigatórias no formulário, mas não há autenticação no servidor.
     onLogin?.()
   }
 
@@ -21,12 +34,13 @@ export default function Login({ onLogin }) {
             <h1 className="text-[30px] font-bold leading-tight text-[#10233f]">Esqueceu a senha?</h1>
             <p className="mt-2 text-[15px] leading-5 text-[#71819a]">Informe seu e-mail institucional para receber as instruções de recuperação.</p>
           </header>
-          <form onSubmit={(event) => event.preventDefault()} className="space-y-5">
+          <form onSubmit={(event) => { event.preventDefault(); setAvisoRecuperacao('A recuperação de senha ainda não está conectada a um serviço de autenticação.') }} className="space-y-5">
             <div>
               <label htmlFor="email-recuperacao" className="mb-1 block text-sm font-bold text-[#18304e]">E-mail institucional</label>
-              <input id="email-recuperacao" name="email-recuperacao" type="email" autoComplete="email" placeholder="voce@escola.edu.br" className="h-12 w-full rounded-lg border border-[#d2deeb] bg-white px-4 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
+              <input id="email-recuperacao" name="email-recuperacao" type="email" autoComplete="email" required placeholder="voce@escola.edu.br" className="h-12 w-full rounded-lg border border-[#d2deeb] bg-white px-4 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
             </div>
             <button type="submit" className="flex h-12 w-full items-center justify-center rounded-lg bg-[#2875dc] text-[15px] font-bold text-white transition hover:bg-[#1e65c2] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">Enviar instruções</button>
+            {avisoRecuperacao && <p role="status" className="text-sm text-amber-800">{avisoRecuperacao}</p>}
           </form>
           <button type="button" onClick={() => setMostrarRecuperacao(false)} className="mx-auto mt-6 flex items-center gap-2 text-sm font-semibold text-[#1767d2] hover:underline"><span aria-hidden="true">←</span> Voltar ao login</button>
           <Footer />
@@ -49,13 +63,13 @@ export default function Login({ onLogin }) {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-bold text-[#18304e]">E-mail institucional</label>
-            <input id="email" name="email" type="email" autoComplete="email" placeholder="voce@escola.edu.br" className="h-11 w-full rounded-lg border border-[#d2deeb] bg-white px-4 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
+            <input id="email" name="email" type="email" autoComplete="email" required defaultValue={emailSalvo} placeholder="voce@escola.edu.br" className="h-11 w-full rounded-lg border border-[#d2deeb] bg-white px-4 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
           </div>
 
           <div>
             <label htmlFor="senha" className="mb-1 block text-sm font-bold text-[#18304e]">Senha</label>
             <div className="relative">
-              <input id="senha" name="senha" type={mostrarSenha ? 'text' : 'password'} autoComplete="current-password" placeholder="Mínimo de 6 caracteres" className="h-[57px] w-full rounded-lg border border-[#d2deeb] bg-white px-4 pr-12 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
+              <input id="senha" name="senha" type={mostrarSenha ? 'text' : 'password'} autoComplete="current-password" required minLength={6} placeholder="Mínimo de 6 caracteres" className="h-[57px] w-full rounded-lg border border-[#d2deeb] bg-white px-4 pr-12 text-[15px] text-[#17304f] outline-none transition placeholder:text-[#9aa9bd] focus:border-[#3980e6] focus:ring-3 focus:ring-[#3980e6]/15" />
               <button type="button" onClick={() => setMostrarSenha((atual) => !atual)} aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[#8191a7] hover:text-[#286fd1]">
                 {mostrarSenha ? (
                   <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-5"><path d="m3 3 18 18M10.6 10.7a2 2 0 0 0 2.7 2.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c5.2 0 8.8 5 9.5 6-.3.5-1.4 2-3.1 3.4M6.2 6.2C3.9 7.7 2.7 9.6 2.5 10c.7 1 4.3 6 9.5 6 1 0 1.9-.2 2.7-.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -68,7 +82,7 @@ export default function Login({ onLogin }) {
 
           <div className="flex items-center justify-between gap-3 pt-[-2px] text-sm">
             <label className="flex cursor-pointer items-center gap-2.5 font-semibold text-[#203753]">
-              <input type="checkbox" className="size-[17px] rounded border-[#aab8c8] accent-[#2876df]" />
+              <input type="checkbox" checked={lembrarEmail} onChange={(event) => setLembrarEmail(event.target.checked)} className="size-[17px] rounded border-[#aab8c8] accent-[#2876df]" />
               Lembrar meu e-mail
             </label>
             <button type="button" onClick={() => setMostrarRecuperacao(true)} className="text-[13px] font-medium text-[#1767d2] hover:underline">Esqueceu a senha?</button>
@@ -81,6 +95,8 @@ export default function Login({ onLogin }) {
             </button>
           </div>
         </form>
+
+        <p className="mt-3 text-center text-xs text-slate-500">Modo demonstrativo: o acesso não valida credenciais em um servidor.</p>
 
         <Footer />
       </section>

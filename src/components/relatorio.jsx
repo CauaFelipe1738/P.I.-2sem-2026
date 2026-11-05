@@ -30,7 +30,7 @@ export default function Relatorio() {
     observations.forEach((row) => csvRows.push(['Aprendizagem', row.studentName, course.nome, '', row.subject, row.date, row.category, `${row.description} ${row.action}`.trim()]))
     const csv = `\uFEFF${csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(';')).join('\r\n')}`
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `relatorio-${course.nome.toLowerCase().replaceAll(' ', '-')}.csv`; anchor.click(); URL.revokeObjectURL(url)
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `relatorio-${course.nome.toLowerCase().replaceAll(' ', '-')}.csv`; document.body.append(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000)
     setNotice('CSV exportado.')
   }
 

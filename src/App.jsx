@@ -25,7 +25,7 @@ import Aprendizagem from './components/aprendizagem.jsx'
 import Desempenho from './components/desempenho.jsx'
 import Frequencia from './components/frequencia.jsx'
 import Relatorio from './components/relatorio.jsx'
-import { cursos as cursosAcademicos, alunos as alunosAcademicos } from './data/dadosAcademicos.js'
+import { cursos as cursosAcademicos } from './data/dadosAcademicos.js'
 const Coordenador = lazy(() => import('./components/coodernador.jsx'))
 const carregando = <div className="loading-screen" role="status" aria-label="Carregando"><span className="loading-spinner" aria-hidden="true" /></div>
 
@@ -48,24 +48,6 @@ const dimensoesIniciais = [
   { nome: 'Estratégias' },
 ]
 
-// Conteúdo demonstrativo do protótipo; não representa registros persistidos no backend.
-const observacoesIniciais = [
-  {
-    nome: 'Sarah Jensen', turma: '9º A', data: '24 set', dimensao: 'Participação',
-    descricao: 'Compartilhou uma estratégia de resolução durante a atividade em grupo.',
-    proximo: 'Convidar a explicar o raciocínio para a turma.',
-  },
-  {
-    nome: 'Mateus Lima', turma: '9º A', data: '23 set', dimensao: 'Autonomia',
-    descricao: 'Iniciou a atividade e consultou os materiais de referência sem lembrete.',
-  },
-  {
-    nome: 'Ana Costa', turma: '9º B', data: '20 set', dimensao: 'Compreensão',
-    descricao: 'Aplicou o conceito com apoio de um exemplo visual.',
-    proximo: 'Retomar com material concreto na próxima aula.',
-  },
-]
-
 function Icon({ type, size = 20 }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
   const paths = {
@@ -80,7 +62,7 @@ function App() {
   const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [selecionadas, setSelecionadas] = useState(dimensoesIniciais.map(({ nome }) => nome))
-  const [observacoes, setObservacoes] = useState(observacoesIniciais)
+  const [observacoes, setObservacoes] = useState([])
   const [modalAberto, setModalAberto] = useState(false)
   const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
 
@@ -126,7 +108,7 @@ function App() {
     event.preventDefault()
     const dados = new FormData(event.currentTarget)
     setObservacoes((atuais) => [{
-      nome: dados.get('aluno'), turma: dados.get('turma'), data: 'Hoje',
+      nome: dados.get('aluno'), turma: dados.get('turma'), curso: cursoSelecionado.nome, data: 'Hoje',
       dimensao: dados.get('dimensao'), descricao: dados.get('descricao'),
       proximo: dados.get('proximo'),
     }, ...atuais])
@@ -213,7 +195,7 @@ function App() {
           {[
             { label: 'Alunos matriculados', value: String(cursoSelecionado.alunos), badge: 'Neste curso', icon: alunosResumoIcon },
             { label: 'Carga horária', value: cursoSelecionado.carga, badge: cursoSelecionado.status, icon: calendarioIcon },
-            { label: 'Registros locais', value: String(observacoes.length), badge: 'Esta sessão', icon: registrosIcon },
+            { label: 'Registros locais', value: String(observacoes.filter((observacao) => observacao.curso === cursoSelecionado.nome).length), badge: 'Esta sessão', icon: registrosIcon },
           ].map((card) => <article key={card.label} className="flex min-h-[82px] items-center justify-between rounded-xl border border-[#d9e1eb] bg-white px-4 py-3 shadow-[0_2px_5px_rgba(15,23,42,0.04)]">
             <div><p className="text-[12px] font-medium">{card.label}</p><div className="mt-1.5 flex items-center gap-2.5"><strong className="text-[24px] leading-none tracking-tight text-slate-950">{card.value}</strong><span className="rounded bg-[#e9f6f0] px-2 py-1 text-[10px] text-[#138466]">{card.badge}</span></div></div>
             <span className="flex h-[32px] w-[32px] items-center justify-center rounded-lg bg-[#eaf3ff]"><img src={card.icon} alt="" className="dashboard-stat-icon" /></span>
@@ -230,19 +212,19 @@ function App() {
               {dimensoesIniciais.map(({ nome }) => <label key={nome} className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-600"><input type="checkbox" checked={selecionadas.includes(nome)} onChange={() => alternarDimensao(nome)} className="h-4 w-4 accent-blue-600" />{nome}</label>)}
             </div>
             <div className="space-y-3.5">
-              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome }) => { const total = observacoes.filter((observacao) => observacao.dimensao === nome).length; return <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.min(100, total * 20)}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>})}
+              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome }) => { const total = observacoes.filter((observacao) => observacao.curso === cursoSelecionado.nome && observacao.dimensao === nome).length; return <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.min(100, total * 20)}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>})}
             </div>
             <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Contagem das observações cadastradas nesta sessão. Sem histórico acadêmico integrado.</div>
           </section>
 
           <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
             <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">Observações recentes</h2><button onClick={() => setModalAberto(true)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
-            <div>{observacoes.filter((obs) => alunosAcademicos.some((aluno) => aluno.nome === obs.nome && aluno.curso === cursoSelecionado.nome)).map((obs, index) => <article key={`${obs.nome}-${index}`} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
+            <div>{observacoes.filter((obs) => obs.curso === cursoSelecionado.nome).map((obs, index) => <article key={`${obs.nome}-${index}`} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
               <h3 className="text-[15px] font-bold text-[#1760b5]">{obs.nome}</h3>
               <p className="mt-0.5 text-[11px] text-slate-500">{obs.turma} · {obs.data} · {obs.dimensao}</p>
               <p className="mt-3 text-[12px] leading-[18px] text-slate-600">{obs.descricao}</p>
               {obs.proximo && <p className="mt-3 text-[12px] leading-[18px] text-slate-600"><strong className="text-slate-800">Próximo passo:</strong><br />{obs.proximo}</p>}
-            </article>)}{observacoes.filter((obs) => alunosAcademicos.some((aluno) => aluno.nome === obs.nome && aluno.curso === cursoSelecionado.nome)).length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nenhum registro local para os alunos deste curso.</p>}</div>
+            </article>)}{observacoes.filter((obs) => obs.curso === cursoSelecionado.nome).length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nenhum registro local para este curso.</p>}</div>
           </section>
         </div>
         </>}
