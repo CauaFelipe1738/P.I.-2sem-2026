@@ -3,6 +3,56 @@ import { alunos, cursos } from '../data/dadosAcademicos.js'
 import { useAcademicData } from '../data/academicoStore.js'
 
 const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm'
+
+function buildCsv(rows, observations, courseName) {
+  const csvRows = [
+    ['Tipo', 'Aluno', 'Curso', 'Turma', 'Disciplina', 'Data', 'Situação/registro', 'Observação'],
+  ]
+
+  rows.forEach((row) =>
+    csvRows.push([
+      'Frequência',
+      row.name,
+      courseName,
+      row.className,
+      row.subject,
+      row.date,
+      row.status,
+      `${row.reason || ''} ${row.note || ''}`.trim(),
+    ]),
+  )
+  observations.forEach((row) =>
+    csvRows.push([
+      'Aprendizagem',
+      row.studentName,
+      courseName,
+      '',
+      row.subject,
+      row.date,
+      row.category,
+      `${row.description} ${row.action}`.trim(),
+    ]),
+  )
+
+  // BOM e separador ponto-e-vírgula facilitam a abertura do CSV no Excel em pt-BR.
+  return `\uFEFF${csvRows
+    .map((row) =>
+      row
+        .map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`)
+        .join(';'),
+    )
+    .join('\r\n')}`
+}
+
+function SummaryCard({ label, value }) {
+  return (
+    <article className="rounded-lg bg-slate-50 p-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <strong className="text-xl">{value}</strong>
+    </article>
+  )
+}
+
 export default function Relatorio() {
   const data = useAcademicData()
   const [courseId, setCourseId] = useState(cursos[0].id)
@@ -14,34 +64,336 @@ export default function Relatorio() {
   const [notice, setNotice] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
   const students = alunos.filter((item) => item.curso === course.nome)
-  // A prévia agrega apenas registros gravados nas áreas de Frequência e Aprendizagem.
-  const sessions = useMemo(() => data.attendance.filter((row) => row.courseId === course.id && (!className || row.className === className) && (!subject || row.subject === subject) && (!period || row.date.startsWith(period))).flatMap((row) => row.students.map((student) => ({ ...student, date: row.date, subject: row.subject, className: row.className }))), [data.attendance, course.id, className, subject, period])
-  const observations = data.learning.filter((row) => row.courseId === course.id && (!studentId || row.studentId === studentId) && (!subject || row.subject === subject) && (!period || row.date.startsWith(period)))
+
+  // A prévia agrega somente registros gravados nas áreas de Frequência e Aprendizagem.
+  const sessions = useMemo(
+    () =>
+      data.attendance
+        .filter(
+          (row) =>
+            row.courseId === course.id &&
+            (!className || row.className === className) &&
+            (!subject || row.subject === subject) &&
+            (!period || row.date.startsWith(period)),
+        )
+        .flatMap((row) =>
+          row.students.map((student) => ({
+            ...student,
+            date: row.date,
+            subject: row.subject,
+            className: row.className,
+          })),
+        ),
+    [data.attendance, course.id, className, subject, period],
+  )
+  const observations = data.learning.filter(
+    (row) =>
+      row.courseId === course.id &&
+      (!studentId || row.studentId === studentId) &&
+      (!subject || row.subject === subject) &&
+      (!period || row.date.startsWith(period)),
+  )
   const rows = sessions.filter((row) => !studentId || row.studentId === studentId)
   const present = rows.filter((row) => ['Presente', 'Atraso'].includes(row.status)).length
-  const rate = rows.length ? Math.round(100 * present / rows.length) : null
-  const courseByClass = Object.entries(rows.reduce((result, row) => ({ ...result, [row.className]: [...(result[row.className] || []), row] }), {}))
-  const reportTitle = category === 'Aluno' ? students.find((item) => item.id === studentId)?.nome || 'Selecione um aluno' : category === 'Turma' ? className || 'Todas as turmas' : category === 'Disciplina' ? subject || 'Todas as disciplinas' : course.nome
+  const rate = rows.length ? Math.round((100 * present) / rows.length) : null
+  const courseByClass = Object.entries(
+    rows.reduce(
+      (result, row) => ({
+        ...result,
+        [row.className]: [...(result[row.className] || []), row],
+      }),
+      {},
+    ),
+  )
+  const reportTitle =
+    category === 'Aluno'
+      ? students.find((item) => item.id === studentId)?.nome || 'Selecione um aluno'
+      : category === 'Turma'
+        ? className || 'Todas as turmas'
+        : category === 'Disciplina'
+          ? subject || 'Todas as disciplinas'
+          : course.nome
 
-  // CSV com BOM e separador ponto-e-vírgula facilita abrir corretamente no Excel em pt-BR.
   function exportCsv() {
-    const csvRows = [['Tipo', 'Aluno', 'Curso', 'Turma', 'Disciplina', 'Data', 'Situação/registro', 'Observação']]
-    rows.forEach((row) => csvRows.push(['Frequência', row.name, course.nome, row.className, row.subject, row.date, row.status, `${row.reason || ''} ${row.note || ''}`.trim()]))
-    observations.forEach((row) => csvRows.push(['Aprendizagem', row.studentName, course.nome, '', row.subject, row.date, row.category, `${row.description} ${row.action}`.trim()]))
-    const csv = `\uFEFF${csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(';')).join('\r\n')}`
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `relatorio-${course.nome.toLowerCase().replaceAll(' ', '-')}.csv`; document.body.append(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    const csv = buildCsv(rows, observations, course.nome)
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+    )
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `relatorio-${course.nome.toLowerCase().replaceAll(' ', '-')}.csv`
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
     setNotice('CSV exportado.')
   }
 
-  return <div className="space-y-5 text-[#10213a]"><header><h3 className="text-xl font-bold">Relatórios acadêmicos</h3><p className="mt-1 text-sm text-slate-600">Consulte dados registrados em Frequência e Aprendizagem e exporte o resultado filtrado.</p></header>
-    <section className="rounded-xl border border-slate-200 bg-white p-4"><h4 className="font-bold">Configurar relatório</h4><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><label className="text-xs font-semibold">Categoria<select className={input} value={category} onChange={(e) => setCategory(e.target.value)}><option>Curso</option><option>Turma</option><option>Disciplina</option><option>Aluno</option></select></label><label className="text-xs font-semibold">Curso<select className={input} value={courseId} onChange={(e) => { setCourseId(Number(e.target.value)); setStudentId('') }}>{cursos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label><label className="text-xs font-semibold">Turma<select className={input} value={className} onChange={(e) => setClassName(e.target.value)}><option value="">Todas</option><option>Turma A</option><option>Turma B</option></select></label><label className="text-xs font-semibold">Disciplina<select className={input} value={subject} onChange={(e) => setSubject(e.target.value)}><option value="">Todas</option>{['Desenvolvimento Web', 'Lógica de Programação', 'Banco de Dados'].map((item) => <option key={item}>{item}</option>)}</select></label><label className="text-xs font-semibold">Aluno<select className={input} value={studentId} onChange={(e) => setStudentId(e.target.value)}><option value="">Todos</option>{students.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label><label className="text-xs font-semibold">Período<input className={input} type="month" value={period} onChange={(e) => setPeriod(e.target.value)} /></label></div><div className="mt-4 flex flex-wrap gap-2"><button onClick={exportCsv} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Exportar CSV</button><button onClick={() => window.print()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Imprimir / Salvar PDF</button>{notice && <span role="status" className="self-center text-sm text-emerald-700">{notice}</span>}</div></section>
-    <section className="report-preview rounded-xl border border-slate-200 bg-white p-5"><div className="border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-700">EDULYTICS · Relatório acadêmico · {category}</p><h4 className="mt-1 text-xl font-bold">{reportTitle}</h4><p className="mt-1 text-xs text-slate-500">Curso: {course.nome} · Período: {period || 'Todo o histórico registrado'} · Emitido em {new Date().toLocaleDateString('pt-BR')}</p></div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3"><article className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Alunos no catálogo do curso</p><strong className="text-xl">{studentId ? 1 : students.length}</strong></article><article className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Frequência dos registros filtrados</p><strong className="text-xl">{rate === null ? 'Sem registros' : `${rate}%`}</strong></article><article className="rounded-lg bg-slate-50 p-3"><p className="text-xs text-slate-500">Registros de aprendizagem</p><strong className="text-xl">{observations.length}</strong></article></div>
-      {category === 'Turma' || category === 'Curso' ? <div className="mt-5"><h5 className="font-semibold">Resumo por turma</h5><div className="mt-2 overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b text-xs text-slate-500"><tr><th className="p-2">Turma</th><th className="p-2">Alunos com registros</th><th className="p-2">Aulas/aluno</th><th className="p-2">Presença</th></tr></thead><tbody>{courseByClass.map(([name, group]) => { const count = new Set(group.map((row) => row.studentId)).size; const attendance = group.filter((row) => ['Presente', 'Atraso'].includes(row.status)).length; return <tr key={name} className="border-b"><td className="p-2">{name}</td><td className="p-2">{count}</td><td className="p-2">{group.length}</td><td className="p-2">{Math.round(attendance * 100 / group.length)}%</td></tr>})}</tbody></table>{!courseByClass.length && <p className="py-4 text-sm text-slate-500">Ainda não há chamadas neste filtro.</p>}</div></div> : null}
-      <div className="mt-5 grid gap-5 lg:grid-cols-2"><div><h5 className="font-semibold">Frequência registrada</h5><ul className="mt-2 space-y-2">{rows.map((row, index) => <li key={`${row.studentId}-${row.date}-${index}`} className="rounded-lg border border-slate-100 p-3 text-sm"><strong>{row.name}</strong><span className="text-slate-500"> · {row.date} · {row.subject} · {row.className}</span><p className="mt-1 text-xs text-slate-600">{row.status}{row.reason ? ` · ${row.reason}` : ''}{row.note ? ` · ${row.note}` : ''}</p></li>)}{!rows.length && <p className="text-sm text-slate-500">Sem registros de frequência para os filtros.</p>}</ul></div><div><h5 className="font-semibold">Aprendizagem e acompanhamento</h5><ul className="mt-2 space-y-2">{observations.map((row) => <li key={row.id} className="rounded-lg border border-slate-100 p-3 text-sm"><strong>{row.studentName} · {row.category}</strong><span className="text-slate-500"> · {row.date} · {row.subject}</span><p className="mt-1 text-xs text-slate-600">{row.description}</p>{row.plan && <p className="mt-1 text-xs text-blue-800">Plano: {row.plan.goal} · {row.plan.status} · {row.plan.result || 'Sem resultado registrado'}</p>}</li>)}{!observations.length && <p className="text-sm text-slate-500">Sem registros de aprendizagem para os filtros.</p>}</ul></div></div>
-      <p className="mt-5 border-t border-slate-200 pt-3 text-xs text-slate-500">Notas, médias, atividades acadêmicas independentes das checklists e evolução histórica não estão cadastradas e não fazem parte deste relatório.</p></section>
-    {/* Na impressão, oculta controles e mantém somente a pré-visualização do relatório. */}
-    <style>{'@media print { body * { visibility: hidden; } .report-preview, .report-preview * { visibility: visible; } .report-preview { position: absolute; inset: 0; border: 0; box-shadow: none; } }'}</style>
-  </div>
+  return (
+    <div className="space-y-5 text-[#10213a]">
+      <header>
+        <h3 className="text-xl font-bold">Relatórios acadêmicos</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          Consulte dados registrados em Frequência e Aprendizagem e exporte o
+          resultado filtrado.
+        </p>
+      </header>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-4">
+        <h4 className="font-bold">Configurar relatório</h4>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="text-xs font-semibold">
+            Categoria
+            <select
+              className={input}
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              <option>Curso</option>
+              <option>Turma</option>
+              <option>Disciplina</option>
+              <option>Aluno</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold">
+            Curso
+            <select
+              className={input}
+              value={courseId}
+              onChange={(event) => {
+                setCourseId(Number(event.target.value))
+                setStudentId('')
+              }}
+            >
+              {cursos.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold">
+            Turma
+            <select
+              className={input}
+              value={className}
+              onChange={(event) => setClassName(event.target.value)}
+            >
+              <option value="">Todas</option>
+              <option>Turma A</option>
+              <option>Turma B</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold">
+            Disciplina
+            <select
+              className={input}
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+            >
+              <option value="">Todas</option>
+              {['Desenvolvimento Web', 'Lógica de Programação', 'Banco de Dados'].map(
+                (item) => (
+                  <option key={item}>{item}</option>
+                ),
+              )}
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold">
+            Aluno
+            <select
+              className={input}
+              value={studentId}
+              onChange={(event) => setStudentId(event.target.value)}
+            >
+              <option value="">Todos</option>
+              {students.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold">
+            Período
+            <input
+              className={input}
+              type="month"
+              value={period}
+              onChange={(event) => setPeriod(event.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={exportCsv}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Exportar CSV
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold"
+          >
+            Imprimir / Salvar PDF
+          </button>
+          {notice && (
+            <span role="status" className="self-center text-sm text-emerald-700">
+              {notice}
+            </span>
+          )}
+        </div>
+      </section>
+
+      <section className="report-preview rounded-xl border border-slate-200 bg-white p-5">
+        <div className="border-b border-slate-200 pb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+            EDULYTICS · Relatório acadêmico · {category}
+          </p>
+          <h4 className="mt-1 text-xl font-bold">{reportTitle}</h4>
+          <p className="mt-1 text-xs text-slate-500">
+            Curso: {course.nome} · Período: {period || 'Todo o histórico registrado'} ·
+            {' '}Emitido em {new Date().toLocaleDateString('pt-BR')}
+          </p>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <SummaryCard
+            label="Alunos no catálogo do curso"
+            value={studentId ? 1 : students.length}
+          />
+          <SummaryCard
+            label="Frequência dos registros filtrados"
+            value={rate === null ? 'Sem registros' : `${rate}%`}
+          />
+          <SummaryCard
+            label="Registros de aprendizagem"
+            value={observations.length}
+          />
+        </div>
+
+        {(category === 'Turma' || category === 'Curso') && (
+          <div className="mt-5">
+            <h5 className="font-semibold">Resumo por turma</h5>
+            <div className="mt-2 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b text-xs text-slate-500">
+                  <tr>
+                    <th className="p-2">Turma</th>
+                    <th className="p-2">Alunos com registros</th>
+                    <th className="p-2">Aulas/aluno</th>
+                    <th className="p-2">Presença</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courseByClass.map(([name, group]) => {
+                    const count = new Set(group.map((row) => row.studentId)).size
+                    const attendance = group.filter((row) =>
+                      ['Presente', 'Atraso'].includes(row.status),
+                    ).length
+
+                    return (
+                      <tr key={name} className="border-b">
+                        <td className="p-2">{name}</td>
+                        <td className="p-2">{count}</td>
+                        <td className="p-2">{group.length}</td>
+                        <td className="p-2">
+                          {Math.round((attendance * 100) / group.length)}%
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              {!courseByClass.length && (
+                <p className="py-4 text-sm text-slate-500">
+                  Ainda não há chamadas neste filtro.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <div>
+            <h5 className="font-semibold">Frequência registrada</h5>
+            <ul className="mt-2 space-y-2">
+              {rows.map((row, index) => (
+                <li
+                  key={`${row.studentId}-${row.date}-${index}`}
+                  className="rounded-lg border border-slate-100 p-3 text-sm"
+                >
+                  <strong>{row.name}</strong>
+                  <span className="text-slate-500">
+                    {' '}
+                    · {row.date} · {row.subject} · {row.className}
+                  </span>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {row.status}
+                    {row.reason ? ` · ${row.reason}` : ''}
+                    {row.note ? ` · ${row.note}` : ''}
+                  </p>
+                </li>
+              ))}
+              {!rows.length && (
+                <p className="text-sm text-slate-500">
+                  Sem registros de frequência para os filtros.
+                </p>
+              )}
+            </ul>
+          </div>
+
+          <div>
+            <h5 className="font-semibold">Aprendizagem e acompanhamento</h5>
+            <ul className="mt-2 space-y-2">
+              {observations.map((row) => (
+                <li
+                  key={row.id}
+                  className="rounded-lg border border-slate-100 p-3 text-sm"
+                >
+                  <strong>
+                    {row.studentName} · {row.category}
+                  </strong>
+                  <span className="text-slate-500">
+                    {' '}
+                    · {row.date} · {row.subject}
+                  </span>
+                  <p className="mt-1 text-xs text-slate-600">{row.description}</p>
+                  {row.plan && (
+                    <p className="mt-1 text-xs text-blue-800">
+                      Plano: {row.plan.goal} · {row.plan.status} ·{' '}
+                      {row.plan.result || 'Sem resultado registrado'}
+                    </p>
+                  )}
+                </li>
+              ))}
+              {!observations.length && (
+                <p className="text-sm text-slate-500">
+                  Sem registros de aprendizagem para os filtros.
+                </p>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        <p className="mt-5 border-t border-slate-200 pt-3 text-xs text-slate-500">
+          Notas, médias, atividades acadêmicas independentes das checklists e evolução
+          histórica não estão cadastradas e não fazem parte deste relatório.
+        </p>
+      </section>
+
+      {/* Na impressão, somente a prévia deve aparecer no documento. */}
+      <style>
+        {
+          '@media print { body * { visibility: hidden; } .report-preview, .report-preview * { visibility: visible; } .report-preview { position: absolute; inset: 0; border: 0; box-shadow: none; } }'
+        }
+      </style>
+    </div>
+  )
 }

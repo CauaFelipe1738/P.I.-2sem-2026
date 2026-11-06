@@ -1,5 +1,4 @@
-﻿import { useState } from 'react'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import menuIcon from './assets/menu-aberto.png'
 import visaoIcon from './assets/visaogeral.png'
 import desempenhoIcon from './assets/desempenho.png'
@@ -12,24 +11,26 @@ import registrosIcon from './assets/registros.png'
 import alunoFoto from './assets/otimizadas/aluno.jpg'
 import professorFoto from './assets/otimizadas/professor.jpg'
 import coordenacaoFoto from './assets/otimizadas/diretor.jpg'
-import './App.css'
-
-// Telas externas ao painel são carregadas sob demanda.
-const Login = lazy(() => import('./components/Login.jsx'))
-const Alunos = lazy(() => import('./components/alunos.jsx'))
-const Professor = lazy(() => import('./components/professor.jsx'))
-// As páginas do menu são importadas junto com o painel para evitar uma tela
-// de carregamento na primeira visita a cada opção.
 import CatalogoAcademico from './components/CatalogoAcademico.jsx'
 import Aprendizagem from './components/aprendizagem.jsx'
 import Desempenho from './components/desempenho.jsx'
 import Frequencia from './components/frequencia.jsx'
 import Relatorio from './components/relatorio.jsx'
 import { cursos as cursosAcademicos } from './data/dadosAcademicos.js'
-const Coordenador = lazy(() => import('./components/coodernador.jsx'))
-const carregando = <div className="loading-screen" role="status" aria-label="Carregando"><span className="loading-spinner" aria-hidden="true" /></div>
+import './App.css'
 
-// Este mapa alimenta o menu principal e associa cada rota ao seu componente.
+// As telas de entrada e perfil são carregadas sob demanda para reduzir o bundle inicial.
+const Login = lazy(() => import('./components/Login.jsx'))
+const Alunos = lazy(() => import('./components/alunos.jsx'))
+const Professor = lazy(() => import('./components/professor.jsx'))
+const Coordenador = lazy(() => import('./components/coodernador.jsx'))
+const carregando = (
+  <div className="loading-screen" role="status" aria-label="Carregando">
+    <span className="loading-spinner" aria-hidden="true" />
+  </div>
+)
+
+// O mesmo mapa define a ordem do menu e resolve o componente exibido em cada tela.
 const paginas = [
   { id: 'visao', nome: 'Visão geral', icone: visaoIcon },
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
@@ -38,7 +39,7 @@ const paginas = [
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
 ]
 
-// Opções compartilhadas entre os gráficos de observações e o formulário local.
+// Uma lista única mantém consistentes as opções do gráfico e do formulário de observações.
 const dimensoesIniciais = [
   { nome: 'Participação' },
   { nome: 'Engajamento' },
@@ -49,7 +50,17 @@ const dimensoesIniciais = [
 ]
 
 function Icon({ type, size = 20 }) {
-  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
+  const common = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.7,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+  }
   const paths = {
     logout: <><path d="M10 17l5-5-5-5M15 12H3" /><path d="M13 4h6a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" /></>,
   }
@@ -57,7 +68,7 @@ function Icon({ type, size = 20 }) {
 }
 
 function App() {
-  // A navegação é controlada pelo estado da aplicação e sincronizada com o histórico do navegador.
+  // O estado da rota e o histórico são mantidos juntos para suportar voltar e avançar.
   const [paginaAtual, setPaginaAtual] = useState('login')
   const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
@@ -67,7 +78,7 @@ function App() {
   const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
 
   useEffect(() => {
-    // Atualiza a tela quando o usuário usa voltar/avançar do navegador.
+    // popstate é necessário porque o histórico não atualiza o estado React sozinho.
     if (!window.history.state?.pagina) window.history.replaceState({ pagina: 'login' }, '')
     const sincronizarPagina = (event) => {
       if (event.state?.pagina) setPaginaAtual(event.state.pagina)
@@ -84,38 +95,38 @@ function App() {
   }
 
   useEffect(() => {
-    // Alt+1…5 abre as páginas na ordem do menu; Escape fecha o drawer.
-    function tratarAtalho(event) {
-      if (event.altKey && /^[1-5]$/.test(event.key)) {
-        event.preventDefault()
-        const pagina = paginas[Number(event.key) - 1].id
-        if (pagina !== paginaAtual) {
-          window.history.pushState({ pagina }, '')
-          setPaginaAtual(pagina)
-        }
-      }
+    function fecharMenuPeloTeclado(event) {
       if (event.key === 'Escape') setMenuAberto(false)
     }
-    window.addEventListener('keydown', tratarAtalho)
-    return () => window.removeEventListener('keydown', tratarAtalho)
-  }, [paginaAtual])
+
+    window.addEventListener('keydown', fecharMenuPeloTeclado)
+    return () => window.removeEventListener('keydown', fecharMenuPeloTeclado)
+  }, [])
 
   function alternarDimensao(nome) {
-    setSelecionadas((atuais) => atuais.includes(nome) ? atuais.filter((item) => item !== nome) : [...atuais, nome])
+    setSelecionadas((atuais) =>
+      atuais.includes(nome)
+        ? atuais.filter((item) => item !== nome)
+        : [...atuais, nome],
+    )
   }
 
   function adicionarObservacao(event) {
     event.preventDefault()
     const dados = new FormData(event.currentTarget)
     setObservacoes((atuais) => [{
-      nome: dados.get('aluno'), turma: dados.get('turma'), curso: cursoSelecionado.nome, data: 'Hoje',
-      dimensao: dados.get('dimensao'), descricao: dados.get('descricao'),
+      nome: dados.get('aluno'),
+      turma: dados.get('turma'),
+      curso: cursoSelecionado.nome,
+      data: 'Hoje',
+      dimensao: dados.get('dimensao'),
+      descricao: dados.get('descricao'),
       proximo: dados.get('proximo'),
     }, ...atuais])
     setModalAberto(false)
   }
 
-  // Login e escolha de perfil são telas externas ao shell acadêmico.
+  // Separar a entrada do shell evita carregar a navegação acadêmica nas telas públicas.
   if (paginaAtual === 'login') {
     return <div className="min-h-screen bg-slate-100 text-slate-900"><Suspense fallback={carregando}><Login onLogin={() => navegar('perfil')} /></Suspense></div>
   }
@@ -181,7 +192,22 @@ function App() {
             <button className="ml-auto self-start text-slate-400 md:hidden" onClick={() => setMenuAberto(false)} aria-label="Fechar menu">×</button>
           </div>
           <p className="mb-2 px-3 text-[12px] font-medium uppercase tracking-[.08em] text-slate-400">Menu principal</p>
-          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">{paginas.map(({ id, nome, icone }, index) => <button key={id} onClick={() => { navegar(id); setMenuAberto(false) }} aria-current={paginaAtual === id ? 'page' : undefined} title={`Atalho Alt+${index + 1}`} className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}><img src={icone} alt="" className="drawer-nav-icon" />{nome}<span className="ml-auto text-[10px] font-medium text-slate-400">Alt+{index + 1}</span></button>)}</nav>
+          <nav className="drawer-nav flex-1 space-y-1" aria-label="Navegação principal">
+            {paginas.map(({ id, nome, icone }) => (
+              <button
+                key={id}
+                onClick={() => {
+                  navegar(id)
+                  setMenuAberto(false)
+                }}
+                aria-current={paginaAtual === id ? 'page' : undefined}
+                className={`drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold ${paginaAtual === id ? 'drawer-item-active' : ''}`}
+              >
+                <img src={icone} alt="" className="drawer-nav-icon" />
+                {nome}
+              </button>
+            ))}
+          </nav>
           <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">{(perfil || 'AC').slice(0, 2).toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{perfil || 'Alex Chen'}</p><p className="mt-1 text-sm text-slate-500">Perfil selecionado</p></div></div>
         </aside>
       </div>}

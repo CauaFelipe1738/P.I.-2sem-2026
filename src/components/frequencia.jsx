@@ -6,6 +6,22 @@ import { addAttendance, checklistAula, optionsForCourse, updateAttendance, useAc
 const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800'
 const pill = 'rounded-lg border border-slate-200 bg-white p-4'
 
+// Separa a conversão do formulário da gravação para manter o formato do registro consistente.
+function buildAttendanceRows(form, students) {
+  return students
+    .filter((student) => form.has(`include-${student.id}`))
+    .map((student) => ({
+      studentId: student.id,
+      name: student.nome,
+      status: form.get(`status-${student.id}`) || 'Presente',
+      reason: form.get(`reason-${student.id}`) || '',
+      checks: checklistAula.filter((_, index) =>
+        form.get(`check-${student.id}-${index}`),
+      ),
+      note: form.get(`note-${student.id}`) || '',
+    }))
+}
+
 export default function Frequencia() {
   const data = useAcademicData()
   const [courseId, setCourseId] = useState(cursos[0].id)
@@ -29,10 +45,33 @@ export default function Frequencia() {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     // Registra apenas os alunos selecionados para esta chamada, inclusive ao corrigir.
-    const rows = students.filter((student) => form.has(`include-${student.id}`)).map((student) => ({ studentId: student.id, name: student.nome, status: form.get(`status-${student.id}`) || 'Presente', reason: form.get(`reason-${student.id}`) || '', checks: checklistAula.filter((_, index) => form.get(`check-${student.id}-${index}`)), note: form.get(`note-${student.id}`) || '' }))
-    if (!rows.length) { setMessage('Selecione ao menos um aluno para registrar a chamada.'); return }
-    const session = { id: editing?.id || crypto.randomUUID(), courseId: course.id, courseName: course.nome, className, subject, date: form.get('date'), lesson: form.get('lesson'), students: rows, createdAt: editing?.createdAt || new Date().toISOString() }
-    if (editing) { updateAttendance(editing.id, session); setMessage('Registro atualizado.') } else { addAttendance(session); setMessage('Frequência salva.') }
+    const rows = buildAttendanceRows(form, students)
+
+    if (!rows.length) {
+      setMessage('Selecione ao menos um aluno para registrar a chamada.')
+      return
+    }
+
+    const session = {
+      id: editing?.id || crypto.randomUUID(),
+      courseId: course.id,
+      courseName: course.nome,
+      className,
+      subject,
+      date: form.get('date'),
+      lesson: form.get('lesson'),
+      students: rows,
+      createdAt: editing?.createdAt || new Date().toISOString(),
+    }
+
+    if (editing) {
+      updateAttendance(editing.id, session)
+      setMessage('Registro atualizado.')
+    } else {
+      addAttendance(session)
+      setMessage('Frequência salva.')
+    }
+
     setEditing(null)
   }
 
