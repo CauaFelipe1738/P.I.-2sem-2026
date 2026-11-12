@@ -164,9 +164,9 @@ function App() {
     )
   }
 
-  if (paginaAtual === 'aluno') return <Suspense fallback={carregando}><PerfilPage Componente={Alunos} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
-  if (paginaAtual === 'professor') return <Suspense fallback={carregando}><PerfilPage Componente={Professor} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>
-  if (paginaAtual === 'coordenador') return <Suspense fallback={carregando}><PerfilPage Componente={Coordenador} perfil={perfil} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
+  if (paginaAtual === 'aluno') return <Suspense fallback={carregando}><PerfilPage Componente={Alunos} perfil={perfil} onTrocarPerfil={() => { setPerfil(null); navegar('perfil') }} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
+  if (paginaAtual === 'professor') return <Suspense fallback={carregando}><PerfilPage Componente={Professor} perfil={perfil} onTrocarPerfil={() => { setPerfil(null); navegar('perfil') }} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>
+  if (paginaAtual === 'coordenador') return <Suspense fallback={carregando}><PerfilPage Componente={Coordenador} perfil={perfil} onTrocarPerfil={() => { setPerfil(null); navegar('perfil') }} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
 
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
 
@@ -263,12 +263,15 @@ function App() {
 
 export default App
 
-function PerfilPage({ Componente, perfil, onSair, professor = false, onAbrirVisaoGeral }) {
+function PerfilPage({ Componente, perfil, onTrocarPerfil, onSair, professor = false, onAbrirVisaoGeral }) {
   return (
     <main className={`min-h-screen px-5 py-6 sm:px-8 ${professor ? 'bg-[#f7f9fc] text-[#10213a] lg:py-3' : 'bg-[#f7f9fc] text-[#10213a]'}`}>
       <header className={`mx-auto flex items-center justify-between ${professor ? 'mb-3 max-w-[1500px]' : 'mb-7 max-w-[1100px]'}`}>
           <div>{!professor && <><p className="text-sm font-bold tracking-wide text-[#2875df]">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">Área de {perfil}</p></>}</div>
-        <button onClick={onSair} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Sair</button>
+        <div className="flex gap-2">
+          <button onClick={onTrocarPerfil} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Trocar perfil</button>
+          <button onClick={onSair} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Sair</button>
+        </div>
       </header>
       <section className={`mx-auto ${professor ? 'max-w-[1500px] bg-[#f7f9fc]' : 'max-w-[1100px] rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm'}`}><Componente onAbrirVisaoGeral={onAbrirVisaoGeral} /></section>
     </main>
