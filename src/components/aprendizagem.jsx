@@ -28,9 +28,9 @@ function SummaryCard({ label, value }) {
   )
 }
 
-export default function Aprendizagem() {
+export default function Aprendizagem({ initialCourseId = cursos[0].id }) {
   const data = useAcademicData()
-  const [courseId, setCourseId] = useState(cursos[0].id)
+  const [courseId, setCourseId] = useState(initialCourseId)
   const [studentId, setStudentId] = useState('')
   const [subject, setSubject] = useState('')
   const [category, setCategory] = useState('Desenvolvimento de habilidade')

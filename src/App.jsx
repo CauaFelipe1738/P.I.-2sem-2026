@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import menuIcon from './assets/menu-aberto.png'
 import visaoIcon from './assets/visaogeral.png'
 import desempenhoIcon from './assets/desempenho.png'
-import relatorioIcon from './assets/relatorio.png'
 import frequenciaIcon from './assets/frequencia.png'
 import aprenderIcon from './assets/aprender.png'
 import alunosResumoIcon from './assets/alunos vg.png'
@@ -15,8 +14,8 @@ import CatalogoAcademico from './components/CatalogoAcademico.jsx'
 import Aprendizagem from './components/aprendizagem.jsx'
 import Desempenho from './components/desempenho.jsx'
 import Frequencia from './components/frequencia.jsx'
-import Relatorio from './components/relatorio.jsx'
 import { cursos as cursosAcademicos } from './data/dadosAcademicos.js'
+import { useAcademicData } from './data/academicoStore.js'
 import './App.css'
 
 // As telas de entrada e perfil são carregadas sob demanda para reduzir o bundle inicial.
@@ -36,7 +35,6 @@ const paginas = [
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
   { id: 'frequencia', nome: 'Frequência', icone: frequenciaIcon, Componente: Frequencia },
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
-  { id: 'relatorio', nome: 'Relatórios', icone: relatorioIcon, Componente: Relatorio },
 ]
 
 // Uma lista única mantém consistentes as opções do gráfico e do formulário de observações.
@@ -73,9 +71,9 @@ function App() {
   const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
   const [selecionadas, setSelecionadas] = useState(dimensoesIniciais.map(({ nome }) => nome))
-  const [observacoes, setObservacoes] = useState([])
-  const [modalAberto, setModalAberto] = useState(false)
   const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
+  const dadosAcademicos = useAcademicData()
+  const registrosCurso = dadosAcademicos.learning.filter((record) => record.courseId === cursoSelecionado.id)
 
   useEffect(() => {
     // popstate é necessário porque o histórico não atualiza o estado React sozinho.
@@ -109,21 +107,6 @@ function App() {
         ? atuais.filter((item) => item !== nome)
         : [...atuais, nome],
     )
-  }
-
-  function adicionarObservacao(event) {
-    event.preventDefault()
-    const dados = new FormData(event.currentTarget)
-    setObservacoes((atuais) => [{
-      nome: dados.get('aluno'),
-      turma: dados.get('turma'),
-      curso: cursoSelecionado.nome,
-      data: 'Hoje',
-      dimensao: dados.get('dimensao'),
-      descricao: dados.get('descricao'),
-      proximo: dados.get('proximo'),
-    }, ...atuais])
-    setModalAberto(false)
   }
 
   // Separar a entrada do shell evita carregar a navegação acadêmica nas telas públicas.
@@ -172,7 +155,7 @@ function App() {
 
   return (
     <main className="dashboard min-h-screen bg-[#f7f9fc] px-5 py-6 text-[#10213a] sm:px-8">
-      <header className="relative mx-auto mb-7 flex max-w-[1500px] items-start justify-between">
+      <header className="sticky top-0 z-20 relative mx-auto mb-7 flex max-w-[1500px] items-start justify-between border-b border-slate-200/70 bg-[#f7f9fc]/95 py-2 backdrop-blur">
         <div className="mt-1 flex gap-2"><button onClick={() => window.history.back()} aria-label="Voltar à página anterior" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg text-slate-600 hover:bg-slate-50">‹</button><button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button></div>
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-center">
           <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{paginaSelecionada?.nome}</h1>
@@ -217,14 +200,13 @@ function App() {
           const Componente = paginaSelecionada?.Componente
           const temaPagina = {
             desempenho: 'border-blue-100 bg-[#f4f8ff]',
-            relatorio: 'border-violet-100 bg-[#faf7ff]',
             frequencia: 'border-emerald-100 bg-[#f4fbf8]',
             aprendizagem: 'border-amber-100 bg-[#fffaf2]',
           }[paginaAtual] || 'border-[#d9e1eb] bg-white'
 
           return (
             <section className={`component-page rounded-2xl border p-5 shadow-sm sm:p-7 ${temaPagina}`}>
-              {Componente ? <Componente /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}
+              {Componente === Aprendizagem ? <Aprendizagem initialCourseId={cursoSelecionado.id} /> : Componente ? <Componente /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}
             </section>
           )
         })()}
@@ -235,7 +217,7 @@ function App() {
           {[
             { label: 'Alunos matriculados', value: String(cursoSelecionado.alunos), badge: 'Neste curso', icon: alunosResumoIcon },
             { label: 'Carga horária', value: cursoSelecionado.carga, badge: cursoSelecionado.status, icon: calendarioIcon },
-            { label: 'Registros locais', value: String(observacoes.filter((observacao) => observacao.curso === cursoSelecionado.nome).length), badge: 'Esta sessão', icon: registrosIcon },
+            { label: 'Registros de aprendizagem', value: String(registrosCurso.length), badge: 'Neste curso', icon: registrosIcon },
           ].map((card) => <article key={card.label} className="flex min-h-[82px] items-center justify-between rounded-xl border border-[#d9e1eb] bg-white px-4 py-3 shadow-[0_2px_5px_rgba(15,23,42,0.04)]">
             <div><p className="text-[12px] font-medium">{card.label}</p><div className="mt-1.5 flex items-center gap-2.5"><strong className="text-[24px] leading-none tracking-tight text-slate-950">{card.value}</strong><span className="rounded bg-[#e9f6f0] px-2 py-1 text-[10px] text-[#138466]">{card.badge}</span></div></div>
             <span className="flex h-[32px] w-[32px] items-center justify-center rounded-lg bg-[#eaf3ff]"><img src={card.icon} alt="" className="dashboard-stat-icon" /></span>
@@ -252,25 +234,24 @@ function App() {
               {dimensoesIniciais.map(({ nome }) => <label key={nome} className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-600"><input type="checkbox" checked={selecionadas.includes(nome)} onChange={() => alternarDimensao(nome)} className="h-4 w-4 accent-blue-600" />{nome}</label>)}
             </div>
             <div className="space-y-3.5">
-              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome }) => { const total = observacoes.filter((observacao) => observacao.curso === cursoSelecionado.nome && observacao.dimensao === nome).length; return <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.min(100, total * 20)}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>})}
+              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome }) => { const checks = { Participação: ['Participou das atividades'], Engajamento: ['Participou da aula', 'Participou das atividades'], Colaboração: ['Participou em grupo'], Autonomia: ['Realizou atividades sozinho'], Compreensão: ['Compreendeu o conteúdo'], Estratégias: ['Necessitou de auxílio', 'Desenvolveu habilidade esperada'] }[nome] || []; const total = registrosCurso.filter((record) => record.checks?.some((check) => checks.includes(check))).length; return <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.min(100, total * 20)}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>})}
             </div>
-            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Contagem das observações cadastradas nesta sessão. Sem histórico acadêmico integrado.</div>
+            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Indicadores calculados a partir dos registros salvos em Aprendizagem.</div>
           </section>
 
           <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
-            <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">Observações recentes</h2><button onClick={() => setModalAberto(true)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
-            <div>{observacoes.filter((obs) => obs.curso === cursoSelecionado.nome).map((obs, index) => <article key={`${obs.nome}-${index}`} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
-              <h3 className="text-[15px] font-bold text-[#1760b5]">{obs.nome}</h3>
-              <p className="mt-0.5 text-[11px] text-slate-500">{obs.turma} · {obs.data} · {obs.dimensao}</p>
-              <p className="mt-3 text-[12px] leading-[18px] text-slate-600">{obs.descricao}</p>
-              {obs.proximo && <p className="mt-3 text-[12px] leading-[18px] text-slate-600"><strong className="text-slate-800">Próximo passo:</strong><br />{obs.proximo}</p>}
-            </article>)}{observacoes.filter((obs) => obs.curso === cursoSelecionado.nome).length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nenhum registro local para este curso.</p>}</div>
+            <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">Registros recentes de aprendizagem</h2><button onClick={() => navegar('aprendizagem', cursoSelecionado)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
+            <div>{registrosCurso.slice(0, 4).map((record) => <article key={record.id} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"><h3 className="text-[15px] font-bold text-[#1760b5]">{record.studentName}</h3><span className="text-[11px] text-slate-500">{record.date}</span></div>
+              <p className="mt-0.5 text-[11px] text-slate-500">{record.subject} · {record.category}</p>
+              <p className="mt-2 text-[12px] leading-[18px] text-slate-600">{record.description}</p>
+              {(record.action || record.plan?.goal) && <p className="mt-2 text-[11px] text-slate-600"><strong className="text-slate-800">Próximo passo:</strong> {record.action || record.plan.goal}</p>}
+            </article>)}{registrosCurso.length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nenhum registro de aprendizagem para este curso.</p>}</div>
           </section>
         </div>
         </>}
       </div>
 
-      {modalAberto && <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalAberto(false) }}><form onSubmit={adicionarObservacao} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"><div className="mb-5 flex items-center justify-between"><h2 className="text-lg font-bold">Novo registro</h2><button type="button" onClick={() => setModalAberto(false)} className="text-xl text-slate-500" aria-label="Fechar">×</button></div><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-medium">Aluno<input name="aluno" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Nome do aluno" /></label><label className="text-sm font-medium">Turma<input name="turma" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Ex.: 9º A" /></label><label className="text-sm font-medium sm:col-span-2">Dimensão<select name="dimensao" required className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal">{dimensoesIniciais.map(({ nome }) => <option key={nome}>{nome}</option>)}</select></label><label className="text-sm font-medium sm:col-span-2">Observação<textarea name="descricao" required rows="3" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Descreva o que foi observado" /></label><label className="text-sm font-medium sm:col-span-2">Próximo passo (opcional)<input name="proximo" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" placeholder="Ação para acompanhar" /></label></div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setModalAberto(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Cancelar</button><button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Salvar registro</button></div></form></div>}
     </main>
   )
 }
