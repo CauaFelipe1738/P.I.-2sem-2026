@@ -260,10 +260,6 @@ export default function Login({ onLogin }) {
           </div>
         </form>
 
-        <p className="mt-3 text-center text-xs text-slate-500">
-          Modo demonstrativo: o acesso não valida credenciais em um servidor.
-        </p>
-
         <Footer />
       </section>
     </main>
@@ -308,9 +304,6 @@ function Brand() {
 function Footer() {
   return (
     <footer className="mt-9 flex flex-wrap items-center justify-center gap-x-3 text-[13px] text-[#8998aa]">
-      <span>Escola Central</span>
-      <span aria-hidden="true">·</span>
-      <span>Ambiente educacional</span>
     </footer>
   )
 }
