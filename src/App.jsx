@@ -34,9 +34,9 @@ const carregando = (
 const paginas = [
   { id: 'visao', nome: 'Visão geral', icone: visaoIcon },
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
-  { id: 'relatorio', nome: 'Relatórios', icone: relatorioIcon, Componente: Relatorio },
   { id: 'frequencia', nome: 'Frequência', icone: frequenciaIcon, Componente: Frequencia },
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
+  { id: 'relatorio', nome: 'Relatórios', icone: relatorioIcon, Componente: Relatorio },
 ]
 
 // Uma lista única mantém consistentes as opções do gráfico e do formulário de observações.
@@ -213,7 +213,21 @@ function App() {
       </div>}
 
       <div className="app-content mx-auto max-w-[1500px]">
-        {paginaAtual !== 'visao' && (() => { const Componente = paginaSelecionada?.Componente; return <section className="component-page rounded-xl border border-[#d9e1eb] bg-white p-6 shadow-sm"><div className="mb-5 border-b border-slate-200 pb-4"><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Escola Central</p><h2 className="mt-1 text-2xl font-bold">{paginaSelecionada?.nome}</h2></div>{Componente ? <Componente /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}</section> })()}
+        {paginaAtual !== 'visao' && (() => {
+          const Componente = paginaSelecionada?.Componente
+          const temaPagina = {
+            desempenho: 'border-blue-100 bg-[#f4f8ff]',
+            relatorio: 'border-violet-100 bg-[#faf7ff]',
+            frequencia: 'border-emerald-100 bg-[#f4fbf8]',
+            aprendizagem: 'border-amber-100 bg-[#fffaf2]',
+          }[paginaAtual] || 'border-[#d9e1eb] bg-white'
+
+          return (
+            <section className={`component-page rounded-2xl border p-5 shadow-sm sm:p-7 ${temaPagina}`}>
+              {Componente ? <Componente /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}
+            </section>
+          )
+        })()}
         {/* A Visão Geral continua usando observações locais do protótipo; os dados acadêmicos ausentes não são estimados. */}
         {/* Os dados acadêmicos ausentes são sinalizados; não são calculados a partir de estimativas. */}
         {paginaAtual === 'visao' && <>

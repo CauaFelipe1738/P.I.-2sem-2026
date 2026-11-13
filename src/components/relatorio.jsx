@@ -64,6 +64,8 @@ export default function Relatorio() {
   const [notice, setNotice] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
   const students = alunos.filter((item) => item.curso === course.nome)
+  const classes = [...new Set(['Turma A', 'Turma B', ...data.attendance.filter((row) => row.courseId === course.id).map((row) => row.className)])]
+  const subjects = [...new Set([course.nome, ...data.attendance.filter((row) => row.courseId === course.id).map((row) => row.subject), ...data.learning.filter((row) => row.courseId === course.id).map((row) => row.subject)])]
 
   // A prévia agrega somente registros gravados nas áreas de Frequência e Aprendizagem.
   const sessions = useMemo(
@@ -132,7 +134,8 @@ export default function Relatorio() {
   return (
     <div className="space-y-5 text-[#10213a]">
       <header>
-        <h3 className="text-xl font-bold">Relatórios acadêmicos</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Consulta e exportação</p>
+        <h3 className="mt-1 text-xl font-bold">Monte seu relatório</h3>
         <p className="mt-1 text-sm text-slate-600">
           Consulte dados registrados em Frequência e Aprendizagem e exporte o
           resultado filtrado.
@@ -182,8 +185,7 @@ export default function Relatorio() {
               onChange={(event) => setClassName(event.target.value)}
             >
               <option value="">Todas</option>
-              <option>Turma A</option>
-              <option>Turma B</option>
+              {classes.map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
 
@@ -195,11 +197,7 @@ export default function Relatorio() {
               onChange={(event) => setSubject(event.target.value)}
             >
               <option value="">Todas</option>
-              {['Desenvolvimento Web', 'Lógica de Programação', 'Banco de Dados'].map(
-                (item) => (
-                  <option key={item}>{item}</option>
-                ),
-              )}
+              {subjects.map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
 

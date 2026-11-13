@@ -18,7 +18,6 @@ export default function Professor({ onAbrirVisaoGeral = () => {} }) {
   const [pagina, setPagina] = useState(1)
   const [buscaAluno, setBuscaAluno] = useState('')
   const [somenteMeusAlunos, setSomenteMeusAlunos] = useState(true)
-  const [verTodosAlunos, setVerTodosAlunos] = useState(false)
 
   const meusCursos = cursos
   // Combina busca e situação antes de ordenar a página visível.
@@ -34,7 +33,7 @@ export default function Professor({ onAbrirVisaoGeral = () => {} }) {
     const curso = cursos.find((item) => item.nome === aluno.curso)
     return (!somenteMeusAlunos || curso?.id !== 4 && curso?.id !== 6) && `${aluno.nome} ${aluno.curso}`.toLocaleLowerCase('pt-BR').includes(buscaAluno.toLocaleLowerCase('pt-BR'))
   }), [buscaAluno, somenteMeusAlunos])
-  const listaAlunos = verTodosAlunos ? alunosVisiveis : alunosVisiveis.slice(0, 5)
+  const listaAlunos = alunosVisiveis
 
   return (
     <div className="professor-page -mx-6 grid min-h-[calc(100vh-190px)] gap-4 bg-[#f7f9fc] px-6 py-3 text-[#10213a] lg:grid-cols-[minmax(0,1fr)_318px] lg:gap-3 lg:py-2">
@@ -70,13 +69,12 @@ export default function Professor({ onAbrirVisaoGeral = () => {} }) {
 
       <aside>
         <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] lg:p-3">
-          <div className="flex items-center justify-between"><h2 className="flex items-center gap-2 text-sm font-bold text-[#10213a]"><Icon className="size-[18px] text-[#2875df]"><><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></></Icon>Alunos do Curso</h2><button onClick={() => setVerTodosAlunos((valor) => !valor)} className="text-[11px] font-semibold text-[#1767d2] hover:underline">Ver todos</button></div>
-          <div className="mt-3 flex items-center -space-x-2" aria-hidden="true">{alunosVisiveis.slice(0, 5).map((aluno, indice) => <span key={aluno.id} className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white ${['bg-blue-500', 'bg-sky-700', 'bg-slate-500', 'bg-violet-500', 'bg-indigo-400'][indice]}`}>{aluno.inicial}</span>)}<span className="ml-1 flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#eaf3ff] text-[9px] text-[#315f91]">+8</span></div>
+          <div className="flex items-center justify-between"><h2 className="flex items-center gap-2 text-sm font-bold text-[#10213a]"><Icon className="size-[18px] text-[#2875df]"><><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></></Icon>Alunos do Curso</h2></div>
+          <div className="mt-3 flex items-center -space-x-2" aria-hidden="true">{alunosVisiveis.slice(0, 5).map((aluno, indice) => <span key={aluno.id} className={`flex size-8 items-center justify-center rounded-full border-2 border-white text-[8px] font-bold text-white ${['bg-blue-500', 'bg-sky-700', 'bg-slate-500', 'bg-violet-500', 'bg-indigo-400'][indice]}`}>{aluno.inicial}</span>)}{alunosVisiveis.length > 5 && <span className="ml-1 flex size-8 items-center justify-center rounded-full border-2 border-white bg-[#eaf3ff] text-[9px] text-[#315f91]">+{alunosVisiveis.length - 5}</span>}</div>
           <p className="mt-2 text-xs text-slate-600">{alunosVisiveis.length} alunos matriculados</p>
           <label className="mt-3 flex cursor-pointer items-center justify-between gap-2 rounded-lg border border-[#d9e1eb] bg-slate-50 px-2.5 py-2 text-[10px] text-slate-600"><span>Apenas alunos do professor</span><input type="checkbox" checked={somenteMeusAlunos} onChange={(event) => setSomenteMeusAlunos(event.target.checked)} className="size-4 accent-[#2875df]" /></label>
           <label className="relative mt-2.5 block"><span className="sr-only">Buscar aluno</span><SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#2875df]" /><input value={buscaAluno} onChange={(event) => setBuscaAluno(event.target.value)} placeholder="Buscar aluno..." className="h-9 w-full rounded-lg border border-[#d2deeb] bg-white pl-8 pr-2 text-[11px] text-[#10213a] outline-none placeholder:text-slate-400 focus:border-[#3980e6]" /></label>
-          <ul className="mt-2 divide-y divide-slate-100">{listaAlunos.map((aluno) => <li key={aluno.id} className="flex items-center gap-2 py-2 lg:py-1.5"><span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#d4e1f1] bg-[#eaf3ff] text-[9px] font-bold text-[#315f91]">{aluno.inicial}</span><span className="min-w-0"><span className="block truncate text-[11px] font-semibold text-slate-700">{aluno.nome}</span><span className="block text-[10px] text-emerald-600">● Ativo</span></span></li>)}{alunosVisiveis.length === 0 && <li className="py-4 text-center text-[11px] text-slate-500">Nenhum aluno corresponde à pesquisa.</li>}</ul>
-          {alunosVisiveis.length > 5 && <button onClick={() => setVerTodosAlunos((valor) => !valor)} className="mt-1 pl-10 text-[11px] font-semibold text-[#1767d2] hover:underline">{verTodosAlunos ? 'Mostrar menos' : 'Ver todos os alunos'} →</button>}
+          <ul className="mt-2 max-h-72 divide-y divide-slate-100 overflow-y-auto overscroll-contain pr-1">{listaAlunos.map((aluno) => <li key={aluno.id} className="flex items-center gap-2 py-2 lg:py-1.5"><span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#d4e1f1] bg-[#eaf3ff] text-[9px] font-bold text-[#315f91]">{aluno.inicial}</span><span className="min-w-0"><span className="block truncate text-[11px] font-semibold text-slate-700">{aluno.nome}</span><span className="block text-[10px] text-emerald-600">● Ativo</span></span></li>)}{alunosVisiveis.length === 0 && <li className="py-4 text-center text-[11px] text-slate-500">Nenhum aluno corresponde à pesquisa.</li>}</ul>
         </section>
 
       </aside>

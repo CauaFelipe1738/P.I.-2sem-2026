@@ -39,6 +39,8 @@ export default function Aprendizagem() {
   const [message, setMessage] = useState('')
   const course = cursos.find((item) => item.id === Number(courseId))
   const students = optionsForCourse(course.nome, alunos)
+  const subjects = [...new Set([course.nome, ...data.learning.filter((row) => row.courseId === course.id).map((row) => row.subject)])]
+  const teachers = [...new Set(cursos.map((item) => item.professor).filter(Boolean))]
 
   // Observações e planos compartilham a coleção para compor o histórico individual.
   const records = data.learning.filter(
@@ -75,7 +77,7 @@ export default function Aprendizagem() {
       courseName: course.nome,
       studentId: student.id,
       studentName: student.nome,
-      subject,
+      subject: form.get('recordSubject'),
       date: form.get('date'),
       category,
       checks: checklistAprendizagem.filter((_, index) =>
@@ -122,7 +124,7 @@ export default function Aprendizagem() {
         courseName: course.nome,
         studentId: student.id,
         studentName: student.nome,
-        subject,
+        subject: form.get('planSubject') || course.nome,
         date: plan.startDate,
         category: 'Plano de acompanhamento',
         description: plan.difficulty,
@@ -141,11 +143,9 @@ export default function Aprendizagem() {
   return (
     <div className="space-y-5 text-[#10213a]">
       <header>
-        <h3 className="text-xl font-bold">Acompanhamento da aprendizagem</h3>
-        <p className="mt-1 text-sm text-slate-600">
-          Registre o processo de aprendizagem, habilidades, dificuldades e ações
-          pedagógicas.
-        </p>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-700">Acompanhamento pedagógico</p>
+        <h3 className="mt-1 text-xl font-bold">Registros de aprendizagem</h3>
+        <p className="mt-1 text-sm text-slate-600">Anote avanços e combine próximos passos com opções rápidas.</p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -155,7 +155,7 @@ export default function Aprendizagem() {
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-3 border-l-4 border-blue-500 bg-blue-50/50 p-4">
           <label className="text-xs font-semibold">
             Curso
             <select
@@ -164,6 +164,7 @@ export default function Aprendizagem() {
               onChange={(event) => {
                 setCourseId(Number(event.target.value))
                 setStudentId('')
+                setSubject('')
               }}
             >
               {cursos.map((item) => (
@@ -176,12 +177,10 @@ export default function Aprendizagem() {
 
           <label className="text-xs font-semibold">
             Filtrar disciplina
-            <input
-              className={field}
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-              placeholder="Todas"
-            />
+            <select className={field} value={subject} onChange={(event) => setSubject(event.target.value)}>
+              <option value="">Todas</option>
+              {subjects.map((item) => <option key={item}>{item}</option>)}
+            </select>
           </label>
 
           <label className="text-xs font-semibold">
@@ -269,12 +268,9 @@ export default function Aprendizagem() {
 
             <label className="text-xs font-semibold">
               Disciplina
-              <input
-                className={field}
-                required
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-              />
+              <select name="recordSubject" className={field} required defaultValue={editingRecord?.subject || subject || course.nome}>
+                {subjects.map((item) => <option key={item}>{item}</option>)}
+              </select>
             </label>
 
             <label className="text-xs font-semibold">
@@ -294,12 +290,15 @@ export default function Aprendizagem() {
 
             <label className="text-xs font-semibold">
               Professor responsável
-              <input
+              <select
                 name="teacher"
                 className={field}
                 defaultValue={editingRecord?.teacher || ''}
-                placeholder="Nome do professor"
-              />
+              >
+                <option value="">Professor do curso</option>
+                {teachers.map((item) => <option key={item}>{item}</option>)}
+                {editingRecord?.teacher && !teachers.includes(editingRecord.teacher) && <option>{editingRecord.teacher}</option>}
+              </select>
             </label>
           </div>
 
@@ -321,22 +320,29 @@ export default function Aprendizagem() {
 
           <label className="block text-xs font-semibold">
             Descrição
-            <textarea
+            <select
               name="description"
               required
-              className={`${field} h-20 py-2`}
+              className={field}
               defaultValue={editingRecord?.description || ''}
-            />
+            >
+              <option value="">Selecione uma observação</option>
+              {['Acompanhou bem o conteúdo', 'Participou das atividades', 'Avançou com autonomia', 'Precisa de apoio no conteúdo', 'Apresentou dificuldade na atividade'].map((item) => <option key={item}>{item}</option>)}
+              {editingRecord?.description && !['Acompanhou bem o conteúdo', 'Participou das atividades', 'Avançou com autonomia', 'Precisa de apoio no conteúdo', 'Apresentou dificuldade na atividade'].includes(editingRecord.description) && <option>{editingRecord.description}</option>}
+            </select>
           </label>
 
           <label className="block text-xs font-semibold">
             Ação de acompanhamento
-            <textarea
+            <select
               name="action"
-              className={`${field} h-16 py-2`}
+              className={field}
               defaultValue={editingRecord?.action || ''}
-              placeholder="Próximo passo pedagógico"
-            />
+            >
+              <option value="">Sem ação adicional</option>
+              {['Retomar o conteúdo na próxima aula', 'Oferecer atividade de reforço', 'Acompanhar a próxima atividade', 'Propor atividade em dupla', 'Revisar o progresso em duas semanas'].map((item) => <option key={item}>{item}</option>)}
+              {editingRecord?.action && !['Retomar o conteúdo na próxima aula', 'Oferecer atividade de reforço', 'Acompanhar a próxima atividade', 'Propor atividade em dupla', 'Revisar o progresso em duas semanas'].includes(editingRecord.action) && <option>{editingRecord.action}</option>}
+            </select>
           </label>
 
           <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
@@ -367,42 +373,43 @@ export default function Aprendizagem() {
           </label>
 
           <label className="block text-xs font-semibold">
+            Disciplina
+            <select name="planSubject" required className={field} defaultValue={course.nome}>
+              {subjects.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </label>
+
+          <label className="block text-xs font-semibold">
             Dificuldade identificada
-            <input
+            <select
               name="difficulty"
               required
               className={field}
               value={planForm.difficulty}
-              onChange={(event) =>
-                setPlanForm({ ...planForm, difficulty: event.target.value })
-              }
-            />
+              onChange={(event) => setPlanForm({ ...planForm, difficulty: event.target.value })}
+            ><option value="">Selecione</option>{['Compreensão do conteúdo', 'Leitura e interpretação', 'Organização das tarefas', 'Participação nas aulas', 'Realização das atividades'].map((item) => <option key={item}>{item}</option>)}</select>
           </label>
 
           <label className="block text-xs font-semibold">
             Objetivo de aprendizagem
-            <input
+            <select
               name="goal"
               required
               className={field}
               value={planForm.goal}
-              onChange={(event) =>
-                setPlanForm({ ...planForm, goal: event.target.value })
-              }
-            />
+              onChange={(event) => setPlanForm({ ...planForm, goal: event.target.value })}
+            ><option value="">Selecione</option>{['Consolidar o conteúdo', 'Realizar atividades com autonomia', 'Aumentar a participação', 'Concluir as tarefas no prazo', 'Demonstrar progresso na próxima revisão'].map((item) => <option key={item}>{item}</option>)}</select>
           </label>
 
           <label className="block text-xs font-semibold">
             Ação proposta
-            <textarea
+            <select
               name="action"
               required
-              className={`${field} h-16 py-2`}
+              className={field}
               value={planForm.action}
-              onChange={(event) =>
-                setPlanForm({ ...planForm, action: event.target.value })
-              }
-            />
+              onChange={(event) => setPlanForm({ ...planForm, action: event.target.value })}
+            ><option value="">Selecione</option>{['Atividade de reforço', 'Revisão individual', 'Prática em dupla', 'Acompanhamento semanal', 'Material complementar'].map((item) => <option key={item}>{item}</option>)}</select>
           </label>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -453,14 +460,12 @@ export default function Aprendizagem() {
 
           <label className="block text-xs font-semibold">
             Resultado observado
-            <input
+            <select
               name="result"
               className={field}
               value={planForm.result}
-              onChange={(event) =>
-                setPlanForm({ ...planForm, result: event.target.value })
-              }
-            />
+              onChange={(event) => setPlanForm({ ...planForm, result: event.target.value })}
+            ><option value="">Ainda não avaliado</option>{['Objetivo alcançado', 'Em progresso', 'Precisa de mais apoio'].map((item) => <option key={item}>{item}</option>)}</select>
           </label>
 
           <button className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
