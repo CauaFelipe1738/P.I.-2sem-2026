@@ -4,7 +4,7 @@
 
 EDULYTICS é um protótipo de painel escolar voltado ao acompanhamento do desempenho
 acadêmico. A interface organiza registros de frequência e aprendizagem, apresenta
-indicadores derivados desses registros e permite consultar ou exportar relatórios.
+indicadores derivados desses registros.
 
 O problema abordado é a dispersão de informações sobre participação, presença e
 acompanhamento pedagógico. No estado atual, o sistema demonstra esses fluxos no
@@ -14,12 +14,11 @@ ficam no armazenamento local do navegador.
 
 ### Funcionalidades implementadas
 
-- Navegação entre Visão geral, Desempenho, Relatórios, Frequência e Aprendizagem.
+- Navegação entre Visão geral, Desempenho, Frequência e Aprendizagem.
 - Catálogo demonstrativo de cursos e alunos na área do professor.
 - Registro, edição e consulta local de chamadas e observações pedagógicas.
 - Registro de planos de acompanhamento associados aos dados de aprendizagem.
 - Indicadores calculados a partir dos registros locais de frequência e aprendizagem.
-- Filtros e exportação CSV ou impressão da prévia do relatório.
 - Seleção de perfil na entrada. As áreas de aluno e coordenação são telas
   demonstrativas, sem dados institucionais conectados.
 
@@ -75,8 +74,6 @@ roteamento, cliente HTTP, ORM ou driver de banco de dados.
 - **`aprendizagem.jsx`** registra observações pedagógicas e planos, além de permitir
   consultar e editar os registros locais.
 - **`desempenho.jsx`** deriva indicadores e alertas dos dados locais disponíveis.
-- **`relatorio.jsx`** combina registros de frequência e aprendizagem, aplica filtros,
-  gera a prévia, exporta CSV e oferece impressão pelo navegador.
 - **`alunos.jsx` e `coodernador.jsx`** são telas demonstrativas sem integração com
   registros acadêmicos.
 - **`dadosAcademicos.js`** fornece os cursos e alunos usados pelos formulários e filtros.
@@ -97,8 +94,7 @@ roteamento, cliente HTTP, ORM ou driver de banco de dados.
 6. A store atualiza seu snapshot em memória, tenta persistir os registros no
    `localStorage` e notifica os componentes inscritos com `useSyncExternalStore`.
    Mudanças feitas em outra aba são recebidas pelo evento `storage`.
-7. Desempenho e Relatórios consultam os mesmos registros e calculam resultados na
-   interface. A exportação CSV é gerada no navegador a partir dos filtros ativos.
+7. Desempenho consulta os registros e calcula resultados na interface.
 
 ## Regras e decisões técnicas
 

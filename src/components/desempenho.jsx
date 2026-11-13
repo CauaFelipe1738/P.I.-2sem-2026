@@ -6,29 +6,10 @@ const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3
 
 function MetricCard({ label, value }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4">
+    <article className="rounded-lg border border-blue-100 border-l-4 border-l-blue-500 bg-white p-4 shadow-sm">
       <p className="text-xs text-slate-500">{label}</p>
       <strong className="mt-1 block text-2xl">{value}</strong>
     </article>
-  )
-}
-
-function AttendanceRow({ row }) {
-  const attended = ['Presente', 'Atraso'].includes(row.status)
-
-  return (
-    <div className="grid grid-cols-[minmax(110px,1fr)_2fr_55px] items-center gap-2 text-xs">
-      <span className="truncate">
-        {row.name} · {row.date}
-      </span>
-      <div className="h-2 rounded bg-slate-100">
-        <div
-          className={`h-2 rounded ${attended ? 'bg-emerald-500' : 'bg-rose-400'}`}
-          style={{ width: '100%' }}
-        />
-      </div>
-      <strong>{row.status}</strong>
-    </div>
   )
 }
 
@@ -82,6 +63,19 @@ export default function Desempenho() {
   const attendanceRate = visibleSessions.length
     ? Math.round((100 * presentCount) / visibleSessions.length)
     : null
+  const studentAttendance = students
+    .filter((student) => !studentId || student.id === studentId)
+    .map((student) => {
+      const records = visibleSessions.filter((row) => row.studentId === student.id)
+      const absences = records.filter((row) => ['Ausente', 'Falta justificada'].includes(row.status)).length
+
+      return {
+        ...student,
+        absences,
+        total: records.length,
+        attendanceRate: records.length ? Math.round((100 * (records.length - absences)) / records.length) : 100,
+      }
+    })
   const activities = visibleSessions.flatMap((row) => row.checks || [])
   const deliveredActivities = activities.filter(
     (item) => item === 'Entregou atividade solicitada',
@@ -112,13 +106,14 @@ export default function Desempenho() {
 
   const classes = [
     ...new Set(
-      data.attendance
+      ['Turma A', 'Turma B', ...data.attendance
         .filter((row) => row.courseId === course.id)
-        .map((row) => row.className),
+        .map((row) => row.className)],
     ),
   ]
   const subjects = [
     ...new Set([
+      course.nome,
       ...data.attendance
         .filter((row) => row.courseId === course.id)
         .map((row) => row.subject),
@@ -127,20 +122,11 @@ export default function Desempenho() {
         .map((row) => row.subject),
     ]),
   ]
-  const learningByCategory = Object.entries(
-    learning.reduce(
-      (counts, row) => ({
-        ...counts,
-        [row.category]: (counts[row.category] || 0) + 1,
-      }),
-      {},
-    ),
-  )
-
   return (
     <div className="space-y-5 text-[#10213a]">
       <header>
-        <h3 className="text-xl font-bold">Desempenho e acompanhamento</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Leitura dos dados</p>
+        <h3 className="mt-1 text-xl font-bold">Indicadores da turma</h3>
         <p className="mt-1 text-sm text-slate-600">
           Indicadores derivados dos registros de frequência e aprendizagem. Não há
           notas ou avaliações cadastradas.
@@ -185,34 +171,20 @@ export default function Desempenho() {
 
           <label className="text-xs font-semibold">
             Turma
-            <input
+            <select
               className={input}
-              list="desempenho-turmas"
               value={className}
               onChange={(event) => setClassName(event.target.value)}
-              placeholder="Todas"
-            />
-            <datalist id="desempenho-turmas">
-              {classes.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
+            ><option value="">Todas</option>{classes.map((name) => <option key={name}>{name}</option>)}</select>
           </label>
 
           <label className="text-xs font-semibold">
             Disciplina
-            <input
+            <select
               className={input}
-              list="desempenho-disciplinas"
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
-              placeholder="Todas"
-            />
-            <datalist id="desempenho-disciplinas">
-              {subjects.map((name) => (
-                <option key={name} value={name} />
-              ))}
-            </datalist>
+            ><option value="">Todas</option>{subjects.map((name) => <option key={name}>{name}</option>)}</select>
           </label>
 
           <label className="text-xs font-semibold">
@@ -248,46 +220,28 @@ export default function Desempenho() {
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-white p-4">
-        <h4 className="font-bold">Registros observáveis</h4>
-        <div className="mt-3 grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-100 pb-3">
           <div>
-            <h5 className="text-sm font-semibold">Frequência por aula</h5>
-            <div className="mt-2 space-y-2">
-              {visibleSessions.map((row, index) => (
-                <AttendanceRow
-                  key={`${row.studentId}-${row.date}-${index}`}
-                  row={row}
-                />
-              ))}
-              {!sessions.length && (
-                <p className="text-sm text-slate-500">
-                  Registre chamadas para visualizar dados.
-                </p>
-              )}
-            </div>
+            <h4 className="font-bold">Frequência por aluno</h4>
+            <p className="mt-1 text-xs text-slate-500">Parte de 100% e diminui conforme as faltas registradas nos filtros.</p>
           </div>
-
-          <div>
-            <h5 className="text-sm font-semibold">
-              Observações de aprendizagem por categoria
-            </h5>
-            <div className="mt-2 space-y-2">
-              {learningByCategory.map(([name, count]) => (
-                <div
-                  key={name}
-                  className="flex items-center justify-between rounded bg-slate-50 px-3 py-2 text-sm"
-                >
-                  <span>{name}</span>
-                  <strong>{count}</strong>
-                </div>
-              ))}
-              {!learning.length && (
-                <p className="text-sm text-slate-500">
-                  Registre observações pedagógicas para consultar a evolução.
-                </p>
-              )}
+          <span className="text-xs text-slate-500">{visibleSessions.length} presenças e faltas registradas</span>
+        </div>
+        <div className="mt-2 divide-y divide-slate-100">
+          {studentAttendance.map((student) => (
+            <div key={student.id} className="grid grid-cols-[minmax(0,1fr)_minmax(80px,180px)_70px] items-center gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-800">{student.nome}</p>
+                <p className="text-xs text-slate-500">{student.absences} faltas de {student.total} aulas</p>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${student.attendanceRate ?? 0}%` }} />
+              </div>
+              <strong className={`text-right text-sm ${student.attendanceRate !== null && student.attendanceRate < 75 ? 'text-rose-700' : 'text-slate-700'}`}>
+                {student.attendanceRate}%
+              </strong>
             </div>
-          </div>
+          ))}
         </div>
       </section>
 

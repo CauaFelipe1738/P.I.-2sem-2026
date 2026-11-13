@@ -15,10 +15,14 @@
   --ui-blue: #2875df;
 }
 
-body { min-width: 320px; min-height: 100vh; }
+body { min-width: 320px; min-height: 100vh; cursor: default; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea { cursor: text; }
+input[type="checkbox"], input[type="radio"], select, summary { cursor: pointer; }
+svg, img { cursor: default; }
+button svg, button img, a svg, a img, summary svg, summary img, label.cursor-pointer svg, label.cursor-pointer img { cursor: pointer; }
 ::selection { color: #10213a; background: #dbeafe; }
 
 /* Acabamentos comuns que complementam as classes utilitárias dos componentes. */
