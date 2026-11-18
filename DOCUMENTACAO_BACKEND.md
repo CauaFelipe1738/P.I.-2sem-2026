@@ -1,13 +1,3 @@
-﻿# EDULYTICS — Requisitos do back-end
-
-## 1. Apresentação
-Protótipo escolar com cursos, frequência, acompanhamento da aprendizagem, indicadores e relatórios. Este documento resume o suporte necessário para conectar a interface a uma API e banco de dados.
-
-## 2. Tecnologias identificadas
-- Front-end: React 19, JavaScript/JSX, Vite 8, Tailwind CSS 4.
-- Back-end iniciado: Java 17, Spring Boot 4.1.1, Spring MVC/JPA/Security; banco H2 em memória, não persistente.
-- O React não faz chamadas HTTP. O Spring declara `GET /alunos` (retorna lista sem metadados de paginação), mas não há integração com a interface nem autenticação própria configurada.
-
 ## 3. Visão geral das funcionalidades
 | Funcionalidade | Estado atual | Necessidade |
 |---|---|---|
