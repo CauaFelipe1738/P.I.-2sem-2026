@@ -19,17 +19,26 @@ O DER não relaciona `ALUNO` com `TURMA` ou `CURSO`; portanto, ainda não é pos
 filtrar a lista de alunos por matrícula/turma nem montar a chamada da turma. Para
 isso, é necessária uma relação de matrícula no modelo.
 
-## Estrutura acadêmica
+## Estrutura acadêmica: curso, turma e oferta de disciplina
 
-| Método e rota | Uso e relacionamento | Acesso |
+No DER, `CURSO` contém várias `TURMA`. A disciplina não pertence diretamente ao
+curso ou à turma: `DISCIPLINA_TURMA` liga uma `DISCIPLINA` a uma `TURMA`. Por isso,
+a oferta da disciplina precisa ser identificada pelo próprio `id_disciplina_turma`.
+
+| Método e rota | Dados retornados conforme o DER | Acesso |
 |---|---|---|
-| `GET /api/v1/cursos` | Lista `CURSO`; filtros sugeridos: `status`, `q`, `page`, `size`. | Autenticado |
-| `GET /api/v1/cursos/{id}/turmas` | Lista `TURMA` pelo `id_curso`. | Autenticado |
-| `GET /api/v1/turmas/{id}/disciplinas` | Lista `DISCIPLINA_TURMA` e os dados de `DISCIPLINA` da turma. | Autenticado |
+| `GET /api/v1/cursos` | `CURSO`: `id_curso`, `nome_curso`, `descricao`, `carga_horaria`, `status`. | Autenticado |
+| `GET /api/v1/cursos/{cursoId}/turmas` | `TURMA` filtrada por `id_curso`: `id_turma`, `semestre`, `data_inicio`, `data_fim`, `nome_turma`, `turno`. | Autenticado |
+| `GET /api/v1/turmas/{turmaId}/disciplinas` | Ofertas `DISCIPLINA_TURMA` da turma, cada uma com `id_disciplina_turma` e os dados de `DISCIPLINA` (`id_disciplina`, `nome_disciplina`, `descricao`, `carga_horaria`). | Autenticado |
 
-Os IDs retornados devem corresponder às chaves do DER (`id_curso`, `id_turma`,
-`id_disciplina_turma`). A relação da disciplina com a aula é feita por
-`id_disciplina_turma`, não diretamente por curso.
+Exemplo de item retornado pela última rota: `{ "disciplinaTurmaId": 25,
+"turmaId": 10, "disciplina": { "disciplinaId": 7,
+"nomeDisciplina": "Programação" } }`. Esses nomes JSON correspondem às chaves
+`id_disciplina_turma`, `id_turma`, `id_disciplina` e `nome_disciplina` do DER.
+As rotas de aulas e avaliações devem
+receber `disciplinaTurmaId`, pois ambas se relacionam com `DISCIPLINA_TURMA` no
+DER. O DER não liga alunos a cursos ou turmas; a lista de alunos de uma turma
+depende de uma relação de matrícula que ainda não está modelada.
 
 ## Aulas e frequência
 
