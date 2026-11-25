@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { normalizeAcademicData } from './academicoStore.js'
 import { deriveAcademicAlerts } from './academicInsights.js'
+import { filterStudentAttendance, summarizeStudentAttendance } from './studentInsights.js'
 
 assert.deepEqual(normalizeAcademicData('{'), { attendance: [], learning: [] })
 assert.deepEqual(normalizeAcademicData('null'), { attendance: [], learning: [] })
@@ -23,4 +24,15 @@ const alerts = deriveAcademicAlerts([student], attendanceRows, learningRows)
 assert.deepEqual(alerts.map((alert) => alert.priority), ['Alta', 'Média', 'Baixa'])
 assert.match(alerts[0].message, /50%/)
 assert.equal(deriveAcademicAlerts([student], attendanceRows.slice(0, 1), []).length, 0)
-console.log('4 verificações de normalização e 3 verificações de alertas concluídas.')
+
+const studentAttendance = [
+  { date: '2026-02-10', subject: 'Matemática', status: 'Presente', sessionId: 's1' },
+  { date: '2026-05-10', subject: 'Matemática', status: 'Falta justificada', sessionId: 's2' },
+  { date: '2026-08-10', subject: 'Matemática', status: 'Ausente', sessionId: 's3' },
+  { date: '2025-11-10', subject: 'História', status: 'Atraso', sessionId: 's4' },
+]
+assert.equal(filterStudentAttendance(studentAttendance, { year: 2026, semester: '1' }).length, 2)
+assert.equal(filterStudentAttendance(studentAttendance, { year: 2026, semester: '1', subject: 'Matemática' }).length, 2)
+assert.deepEqual(summarizeStudentAttendance(studentAttendance.slice(0, 2)), { records: 2, lessons: 2, presences: 1, absences: 1, justified: 1, attendanceRate: 50 })
+assert.equal(summarizeStudentAttendance([]).attendanceRate, null)
+console.log('4 verificações de normalização, 3 de alertas e 4 de filtros/frequência do aluno concluídas.')
