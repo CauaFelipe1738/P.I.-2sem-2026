@@ -6,7 +6,7 @@ const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3
 
 function MetricCard({ label, value }) {
   return (
-    <article className="rounded-lg border border-blue-100 border-l-4 border-l-blue-500 bg-white p-4 shadow-sm">
+    <article className="metric-card metric-card-blue rounded-lg border border-blue-100 border-l-4 border-l-blue-500 bg-white p-4 shadow-sm">
       <p className="text-xs text-slate-500">{label}</p>
       <strong className="mt-1 block text-2xl">{value}</strong>
     </article>

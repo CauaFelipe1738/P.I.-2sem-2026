@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { alunos, cursos } from '../data/dadosAcademicos.js'
 import { deriveAcademicAlerts, isPresentStatus } from '../data/academicInsights.js'
 import { useAcademicData } from '../data/academicoStore.js'
@@ -6,6 +6,7 @@ import { useAcademicData } from '../data/academicoStore.js'
 const inputClass = 'h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800'
 const percentPresent = isPresentStatus
 const FILTERS_KEY = 'edulytics.dashboard.filters.v1'
+const categoryPalette = ['#2875df', '#21877a', '#c58b18', '#1760b5', '#c65b68']
 
 function readDashboardFilters() {
   try {
@@ -39,7 +40,7 @@ function Metric({ label, value, detail, tone = 'blue' }) {
     amber: 'border-amber-100 bg-white',
     rose: 'border-rose-100 bg-white',
   }
-  return <article className={`rounded-xl border p-4 shadow-[0_2px_5px_rgba(15,23,42,0.04)] ${tones[tone]}`}>
+  return <article className={`metric-card metric-card-${tone} rounded-xl border p-4 shadow-[0_2px_5px_rgba(15,23,42,0.04)] ${tones[tone]}`}>
     <p className="text-xs font-medium text-slate-600">{label}</p>
     <strong className="mt-1.5 block text-2xl leading-none tracking-tight text-slate-950">{value}</strong>
     <p className="mt-2 text-[11px] text-slate-500">{detail}</p>
@@ -48,6 +49,7 @@ function Metric({ label, value, detail, tone = 'blue' }) {
 
 function TrendChart({ data, title, valueLabel, color = '#2875df', formatValue = (value) => String(value) }) {
   const [activePoint, setActivePoint] = useState(null)
+  const fillId = `trend-fill-${useId().replace(/:/g, '')}`
   const values = data.map((item) => item.value).filter(Number.isFinite)
   const maxValue = Math.max(100, ...values)
   const points = data.map((item, index) => ({
@@ -56,8 +58,9 @@ function TrendChart({ data, title, valueLabel, color = '#2875df', formatValue = 
     y: 144 - (Math.max(0, item.value) / maxValue) * 112,
   }))
   const path = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')
+  const areaPath = points.length ? `${path} L ${points.at(-1).x} 148 L ${points[0].x} 148 Z` : ''
 
-  return <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5">
+  return <section className="chart-panel rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5">
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div><h2 className="text-sm font-bold">{title}</h2><p className="mt-1 text-xs text-slate-500">{valueLabel} · baseado nos registros salvos</p></div>
       {activePoint && <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800" aria-live="polite">{activePoint.label}: {formatValue(activePoint.value)}</span>}
@@ -65,7 +68,9 @@ function TrendChart({ data, title, valueLabel, color = '#2875df', formatValue = 
     {data.some((item) => item.value > 0) ? <div className="mt-4 overflow-x-auto">
       <svg viewBox="0 0 600 190" role="group" aria-roledescription="gráfico de linhas" aria-label={`${title}. ${data.map((point) => `${point.label}: ${formatValue(point.value)}`).join('; ')}`} className="h-[210px] min-w-[540px] w-full overflow-visible">
         <title>{title}</title>
+        <defs><linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity=".2" /><stop offset="100%" stopColor={color} stopOpacity=".015" /></linearGradient></defs>
         {[0, 1, 2, 3].map((line) => { const y = 32 + line * 37; return <g key={line}><line x1="35" x2="574" y1={y} y2={y} stroke="#e8edf3" strokeDasharray="3 4" /><text x="27" y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="9">{formatValue(Math.round(maxValue * (3 - line) / 3))}</text></g> })}
+        <path d={areaPath} fill={`url(#${fillId})`} />
         <path d={path} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((point) => <g key={point.label} onMouseEnter={() => setActivePoint(point)} onMouseLeave={() => setActivePoint(null)} onFocus={() => setActivePoint(point)} onBlur={() => setActivePoint(null)} tabIndex="0" role="button" aria-label={`${point.label}: ${formatValue(point.value)}`} className="cursor-pointer">
           <circle cx={point.x} cy={point.y} r="12" fill="transparent" />
@@ -185,7 +190,7 @@ export default function DashboardOverview({ course, onSelectCourse, onNavigate, 
   const showFrequency = view === 'overview' || view === 'attendance'
   const showLearning = view === 'overview' || view === 'learning' || view === 'activities'
 
-  return <div className="space-y-5">
+  return <div className="academic-dashboard space-y-5">
     <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Monitoramento acadêmico</p><h2 className="mt-1 text-xl font-bold">Visão geral</h2><p className="mt-1 text-sm text-slate-600">Indicadores calculados a partir das chamadas e observações registradas.</p></div><div className="flex flex-wrap gap-2"><button onClick={() => onNavigate('frequencia', course)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Registrar frequência</button><button onClick={() => onNavigate('aprendizagem', course)} className="rounded-lg bg-[#2875df] px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Nova observação</button></div></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -207,7 +212,7 @@ export default function DashboardOverview({ course, onSelectCourse, onNavigate, 
 
     <div className={`grid items-start gap-5 ${view === 'overview' ? 'xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,.8fr)]' : 'grid-cols-1'}`}>
       {showFrequency && <TrendChart data={chartData} title="Evolução da frequência" valueLabel="Percentual de presença por mês" formatValue={(value) => `${value}%`} />}
-      {showLearning && (view === 'learning' ? <TrendChart data={learningTrend} title="Evolução dos registros de aprendizagem" valueLabel="Observações registradas por mês" color="#d49b24" /> : <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5"><h2 className="text-sm font-bold">Registros por categoria</h2><p className="mt-1 text-xs text-slate-500">Observações no período e nos filtros selecionados.</p><div className="mt-4 space-y-4">{activityByCategory.map(([name, count]) => <div key={name}><div className="mb-1.5 flex justify-between gap-3 text-xs"><span className="text-slate-600">{name}</span><strong className="text-slate-800">{count}</strong></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.max(8, 100 * count / Math.max(...activityByCategory.map(([, value]) => value))) }%` }} /></div></div>)}{!activityByCategory.length && <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhuma observação neste recorte.</p>}</div><p className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500">Não há avaliações ou notas cadastradas para gerar médias acadêmicas.</p></section>)}
+      {showLearning && (view === 'learning' ? <TrendChart data={learningTrend} title="Evolução dos registros de aprendizagem" valueLabel="Observações registradas por mês" color="#c58b18" /> : <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5"><h2 className="text-sm font-bold">Registros por categoria</h2><p className="mt-1 text-xs text-slate-500">Observações no período e nos filtros selecionados.</p><div className="mt-4 space-y-4">{activityByCategory.map(([name, count], index) => <div key={name}><div className="mb-1.5 flex justify-between gap-3 text-xs"><span className="text-slate-600">{name}</span><strong className="text-slate-800">{count}</strong></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full" style={{ width: `${Math.max(8, 100 * count / Math.max(...activityByCategory.map(([, value]) => value))) }%`, backgroundColor: categoryPalette[index % categoryPalette.length] }} /></div></div>)}{!activityByCategory.length && <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">Nenhuma observação neste recorte.</p>}</div><p className="mt-4 border-t border-slate-100 pt-3 text-[11px] text-slate-500">Não há avaliações ou notas cadastradas para gerar médias acadêmicas.</p></section>)}
     </div>
 
     {view !== 'activities' && <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-sm font-bold">Estudantes que podem precisar de acompanhamento</h2><p className="mt-1 text-xs text-slate-500">Alertas baseados em registros existentes; selecione um nome para abrir o resumo individual.</p></div><label className="w-full sm:w-64"><span className="sr-only">Pesquisar estudante</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar estudante..." className="h-9 w-full rounded-lg border border-slate-300 px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label></div>

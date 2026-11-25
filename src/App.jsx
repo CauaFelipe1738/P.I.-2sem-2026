@@ -239,7 +239,7 @@ export default App
 
 function PerfilPage({ Componente, perfil, onTrocarPerfil, onSair, professor = false, aluno = false, onAbrirVisaoGeral }) {
   return (
-    <main className={`min-h-screen px-5 py-6 sm:px-8 ${professor ? 'bg-[#f7f9fc] text-[#10213a] lg:py-3' : 'bg-[#f7f9fc] text-[#10213a]'}`}>
+    <main className={`profile-shell ${professor ? 'profile-shell-professor' : aluno ? 'profile-shell-student' : ''} min-h-screen px-5 py-6 sm:px-8 ${professor ? 'bg-[#f7f9fc] text-[#10213a] lg:py-3' : 'bg-[#f7f9fc] text-[#10213a]'}`}>
       <header className={`mx-auto flex items-center justify-between ${professor ? 'mb-3 max-w-[1500px]' : 'mb-7 max-w-[1100px]'}`}>
           <div>{!professor && <><p className="text-sm font-bold tracking-wide text-[#2875df]">EDULYTICS</p><p className="mt-1 text-sm text-slate-500">{aluno ? 'Área do aluno · somente consulta' : `Área de ${perfil}`}</p></>}</div>
         <div className="flex gap-2">

@@ -13,11 +13,31 @@
   --ui-ink: #10213a;
   --ui-muted: #64748b;
   --ui-blue: #2875df;
+  --ui-blue-deep: #1760b5;
+  --ui-blue-soft: #eaf3ff;
+  --ui-blue-wash: #f3f8ff;
+  --ui-teal: #21877a;
+  --ui-teal-soft: #edf8f5;
+  --ui-amber: #c58b18;
+  --ui-amber-soft: #fff7e8;
+  --ui-rose: #c65b68;
+  --ui-rose-soft: #fff1f2;
+  --ui-shadow-soft: 0 8px 22px rgb(26 56 92 / 5%);
 }
 
-body { min-width: 320px; min-height: 100vh; cursor: default; }
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  cursor: default;
+  background-color: #f7f9fc;
+  background-image:
+    radial-gradient(ellipse at 8% 0%, rgb(40 117 223 / 4%), transparent 34rem),
+    radial-gradient(ellipse at 100% 45%, rgb(33 135 122 / 2.5%), transparent 32rem);
+}
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+button:not(:disabled) { transition: transform 140ms ease, box-shadow 160ms ease, background-color 160ms ease; }
+button:not(:disabled):active { transform: translateY(1px); }
 button:disabled { cursor: not-allowed; }
 input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea { cursor: text; }
 input[type="checkbox"], input[type="radio"], select, summary { cursor: pointer; }
@@ -28,7 +48,8 @@ button svg, button img, a svg, a img, summary svg, summary img, label.cursor-poi
 /* Acabamentos comuns que complementam as classes utilitárias dos componentes. */
 .component-page { border-color: var(--ui-border); }
 .component-page > div > header h3 { letter-spacing: -0.025em; }
-.component-page button:not(:disabled) { transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease; }
+.component-page button:not(:disabled) { transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+.component-page button:not(:disabled):active { transform: translateY(1px); }
 .component-page input:not([type="checkbox"]), .component-page select, .component-page textarea {
   border-color: #cbd5e1;
   border-radius: 7px;
@@ -45,6 +66,16 @@ button svg, button img, a svg, a img, summary svg, summary img, label.cursor-poi
 .component-page article { transition: border-color 140ms ease, background-color 140ms ease; }
 .component-page table tbody tr:hover { background: #f8fafc; }
 .component-page :where(label) { line-height: 1.45; }
+.component-page section.rounded-xl,
+.component-page form.rounded-xl {
+  background-image: linear-gradient(135deg, rgb(238 245 255 / 38%), transparent 48%);
+  box-shadow: var(--ui-shadow-soft), inset 0 1px 0 rgb(255 255 255 / 82%);
+}
+
+.component-page article.rounded-lg:not(.metric-card) {
+  border-color: #e3eaf3;
+  background-image: linear-gradient(120deg, rgb(245 249 255 / 62%), transparent 66%);
+}
 
 /* Mantém formulários e conteúdo utilizáveis em telas estreitas. */
 @media (max-width: 640px) {
@@ -56,8 +87,19 @@ button svg, button img, a svg, a img, summary svg, summary img, label.cursor-poi
 .login-background {
   background-color: #f8fbff;
   background-image:
-    linear-gradient(142deg, transparent 0 62%, rgb(59 130 246 / 0.08) 62% 76%, transparent 76%),
-    linear-gradient(32deg, transparent 0 14%, rgb(147 197 253 / 0.14) 14% 28%, transparent 28%),
+    radial-gradient(ellipse at 13% 16%, rgb(40 117 223 / 0.12), transparent 24rem),
+    radial-gradient(ellipse at 92% 82%, rgb(33 135 122 / 0.06), transparent 24rem),
+    linear-gradient(142deg, transparent 0 62%, rgb(59 130 246 / 0.07) 62% 76%, transparent 76%),
+    linear-gradient(32deg, transparent 0 14%, rgb(147 197 253 / 0.12) 14% 28%, transparent 28%),
     linear-gradient(118deg, #fff 0%, #f5f9ff 55%, #e8f1ff 100%);
+}
+
+.loading-screen {
+  background-image: radial-gradient(ellipse at center, #fff 0%, #f3f8ff 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled) { transition: none; }
+  button:not(:disabled):active { transform: none; }
 }
 

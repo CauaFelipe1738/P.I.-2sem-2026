@@ -49,7 +49,7 @@ export default function Login({ onLogin }) {
   if (mostrarRecuperacao) {
     return (
       <main className="login-background flex min-h-dvh items-center justify-center px-4 py-8 text-[#10233f]">
-        <section className="w-full max-w-[475px] rounded-[20px] border border-[#d3e1f1] bg-white px-6 py-7 shadow-[0_22px_60px_rgba(31,54,82,0.11)] sm:px-[53px] sm:py-9">
+        <section className="login-card w-full max-w-[475px] rounded-[20px] border border-[#d3e1f1] bg-white px-6 py-7 shadow-[0_22px_60px_rgba(31,54,82,0.11)] sm:px-[53px] sm:py-9">
           <Brand />
 
           <header className="mb-8 text-center">
@@ -113,7 +113,7 @@ export default function Login({ onLogin }) {
 
   return (
     <main className="login-background flex min-h-dvh items-center justify-center px-4 py-3 text-[#10233f]">
-      <section className="w-full max-w-[475px] rounded-[20px] border border-[#d3e1f1] bg-white px-6 py-5 shadow-[0_22px_60px_rgba(31,54,82,0.11)] sm:px-[53px] sm:py-6">
+      <section className="login-card w-full max-w-[475px] rounded-[20px] border border-[#d3e1f1] bg-white px-6 py-5 shadow-[0_22px_60px_rgba(31,54,82,0.11)] sm:px-[53px] sm:py-6">
         <Brand />
 
         <header className="mb-9 text-center">

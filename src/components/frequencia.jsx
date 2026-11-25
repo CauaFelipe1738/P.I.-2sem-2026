@@ -4,7 +4,7 @@ import { addAttendance, checklistAula, optionsForCourse, updateAttendance, useAc
 
 // Classes utilitárias comuns mantêm os campos e indicadores visualmente consistentes.
 const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800'
-const pill = 'rounded-lg border border-slate-200 bg-white p-4'
+const pill = 'metric-card rounded-lg border border-slate-200 bg-white p-4'
 
 function formatLocalDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')

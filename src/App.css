@@ -11,22 +11,27 @@
 
 .app-drawer {
   animation: drawer-slide-in 200ms ease-out;
+  border-right: 1px solid #d9e4f0;
+  background-image: linear-gradient(180deg, #f5f9ff 0%, #fff 34%);
+  box-shadow: 18px 0 48px rgb(22 48 78 / 12%);
 }
 
 .drawer-item {
   color: #596a80;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition: color 160ms ease, background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .drawer-item:hover {
   color: #1b5caa;
   background: #f2f7fd;
+  transform: translateX(2px);
 }
 
 .drawer-item-active,
 .drawer-item-active:hover {
   color: #1760b5;
-  background: #e5f1ff;
+  background: linear-gradient(100deg, #e5f1ff, #f2f7ff);
+  box-shadow: inset 3px 0 0 #2875df;
 }
 
 .menu-trigger-icon {
@@ -56,6 +61,143 @@
 
 .component-page {
   min-height: 420px;
+}
+
+.login-card {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(145deg, rgb(243 248 255 / 55%), transparent 42%);
+}
+
+.login-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  content: "";
+  background: linear-gradient(90deg, #2875df 0%, #5d9bea 55%, #55ae9a 100%);
+}
+
+.dashboard {
+  background-image:
+    radial-gradient(ellipse at 2% 0%, rgb(40 117 223 / 4%), transparent 32rem),
+    radial-gradient(ellipse at 98% 36%, rgb(33 135 122 / 2.5%), transparent 30rem);
+  background-attachment: fixed;
+}
+
+.dashboard > header {
+  border-color: rgb(202 215 231 / 78%);
+  box-shadow: 0 12px 20px -22px rgb(26 56 92 / 34%);
+}
+
+.profile-shell {
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgb(40 117 223 / 4%), transparent 32rem),
+    radial-gradient(ellipse at 100% 100%, rgb(33 135 122 / 2.5%), transparent 28rem);
+}
+
+.profile-shell:not(.profile-shell-professor) > section {
+  border-color: #d4e1ef;
+  box-shadow: 0 12px 32px rgb(25 55 91 / 5%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+.profile-shell-student > section {
+  background-image: linear-gradient(145deg, rgb(237 245 255 / 62%), rgb(255 255 255 / 96%) 42%);
+}
+
+.professor-page {
+  background-image: radial-gradient(ellipse at 0% 0%, rgb(40 117 223 / 3%), transparent 35rem);
+}
+
+.professor-page aside section,
+.professor-page button.group {
+  box-shadow: 0 5px 16px rgb(24 50 82 / 4%), inset 0 1px 0 rgb(255 255 255 / 88%);
+}
+
+.component-page {
+  background-image: linear-gradient(145deg, rgb(255 255 255 / 42%), transparent 42%);
+  box-shadow: 0 14px 36px rgb(24 50 82 / 4%), inset 0 1px 0 rgb(255 255 255 / 70%);
+}
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(142deg, rgb(243 248 255 / 70%), transparent 60%);
+  box-shadow: 0 6px 18px rgb(24 50 82 / 4%), inset 0 1px 0 rgb(255 255 255 / 88%);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.metric-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  content: "";
+  background: linear-gradient(90deg, #2875df, #83b4f2);
+}
+
+.metric-card-green { background-image: linear-gradient(142deg, #f0faf6, #fff 72%); }
+.metric-card-green::before { background: linear-gradient(90deg, #21877a, #79c1a9); }
+.metric-card-amber { background-image: linear-gradient(142deg, #fff9ed, #fff 72%); }
+.metric-card-amber::before { background: linear-gradient(90deg, #c58b18, #edc66d); }
+.metric-card-rose { background-image: linear-gradient(142deg, #fff3f4, #fff 72%); }
+.metric-card-rose::before { background: linear-gradient(90deg, #c65b68, #e69ba2); }
+.metric-card-slate { background-image: linear-gradient(142deg, #f4f7fb, #fff 72%); }
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgb(24 65 112 / 8%), inset 0 1px 0 rgb(255 255 255 / 95%);
+}
+
+.chart-panel {
+  background-image: linear-gradient(155deg, rgb(243 248 255 / 78%), #fff 35%);
+  box-shadow: 0 8px 22px rgb(26 56 92 / 5%), inset 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+.chart-panel svg text { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.chart-panel svg g > circle { transition: r 150ms ease, stroke-width 150ms ease; }
+.chart-panel svg g:focus-visible { outline: none; }
+.chart-panel svg g:focus-visible > circle:nth-of-type(2) { stroke-width: 4; }
+.chart-panel [aria-live="polite"] {
+  border: 1px solid #d7e7fa;
+  background: linear-gradient(110deg, #eaf3ff, #f8fbff);
+  box-shadow: 0 2px 8px rgb(40 117 223 / 8%);
+}
+
+.student-dashboard section.rounded-xl,
+.academic-dashboard section.rounded-xl {
+  border-color: #d7e2ee;
+  box-shadow: 0 7px 20px rgb(26 56 92 / 4.5%), inset 0 1px 0 rgb(255 255 255 / 84%);
+}
+
+.student-dashboard nav {
+  background-image: linear-gradient(110deg, #f2f7ff, #fff 58%);
+  box-shadow: 0 5px 16px rgb(26 56 92 / 4%);
+}
+
+.student-dashboard nav button[aria-current="page"] {
+  box-shadow: inset 0 0 0 1px rgb(40 117 223 / 10%), 0 2px 6px rgb(40 117 223 / 7%);
+}
+
+.notification-popover {
+  border-color: #cedbeb;
+  box-shadow: 0 20px 48px rgb(19 42 71 / 17%);
+}
+
+.notification-popover > header {
+  background: linear-gradient(112deg, #edf5ff, #fff 80%);
+}
+
+.help-panel,
+[role="dialog"] {
+  border-color: #cedbeb;
+  box-shadow: 0 24px 60px rgb(19 42 71 / 20%);
+}
+
+.help-panel > header,
+[role="dialog"] > header {
+  border-bottom: 1px solid #edf1f6;
+  background: linear-gradient(110deg, #f2f7ff, #fff 72%);
+  margin: -1.25rem -1.25rem 0;
+  padding: 1.25rem 1.25rem 1rem;
 }
 
 .loading-screen {
@@ -117,5 +259,11 @@
   .drawer-layer,
   .app-drawer,
   .drawer-item { animation: none; transition: none; }
+  .drawer-item:hover,
+  .metric-card:hover,
+  .professor-page button.group:hover { transform: none; }
+  .metric-card,
+  .professor-page button.group,
+  .chart-panel svg g > circle { transition: none; }
   .loading-spinner { animation: none; }
 }

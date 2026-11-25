@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { alunos, cursos } from '../data/dadosAcademicos.js'
 import { useAcademicData } from '../data/academicoStore.js'
 import { filterStudentAttendance, isAbsence, isPresent, summarizeStudentAttendance } from '../data/studentInsights.js'
@@ -46,7 +46,7 @@ function MetricCard({ label, value, detail, tone = 'blue', onClick, help }) {
     <strong className="mt-1.5 block text-2xl leading-none tracking-tight text-slate-950">{value}</strong>
     <span className="mt-2 block text-[11px] leading-4 text-slate-500">{detail}</span>
   </>
-  const className = `min-h-[104px] rounded-xl border p-4 text-left shadow-[0_2px_5px_rgba(15,23,42,0.04)] ${tones[tone]} ${onClick ? 'transition hover:border-blue-200 hover:bg-blue-50/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2875df]' : ''}`
+  const className = `metric-card metric-card-${tone} min-h-[104px] rounded-xl border p-4 text-left shadow-[0_2px_5px_rgba(15,23,42,0.04)] ${tones[tone]} ${onClick ? 'transition hover:border-blue-200 hover:bg-blue-50/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2875df]' : ''}`
   return onClick ? <button type="button" onClick={onClick} title={help} className={className}>{content}</button> : <article className={className}>{content}</article>
 }
 
@@ -56,6 +56,7 @@ function EmptyState({ title, detail }) {
 
 function FrequencyTrend({ rows }) {
   const [active, setActive] = useState(null)
+  const fillId = `student-frequency-fill-${useId().replace(/:/g, '')}`
   const months = [...new Set(rows.map((row) => row.date?.slice(0, 7)).filter((month) => /^\d{4}-\d{2}$/.test(month)))].sort()
   const points = months.map((month, index) => {
     const records = rows.filter((row) => row.date?.startsWith(month))
@@ -65,13 +66,16 @@ function FrequencyTrend({ rows }) {
     return { label, value: Math.round(100 * present / records.length), x: months.length < 2 ? 300 : 42 + index * 516 / (months.length - 1) }
   }).map((point) => ({ ...point, y: 144 - point.value * 1.12 }))
   const path = points.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ')
+  const areaPath = points.length ? `${path} L ${points.at(-1).x} 148 L ${points[0].x} 148 Z` : ''
 
   if (!points.length) return <EmptyState title="Sem histórico de frequência neste período" detail="Quando houver chamadas registradas para este perfil, a evolução aparecerá aqui." />
 
-  return <section className="rounded-xl border border-[#d9e1eb] bg-white p-4">
+  return <section className="chart-panel rounded-xl border border-[#d9e1eb] bg-white p-4">
     <div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="text-sm font-bold">Evolução da frequência</h3><p className="mt-1 text-xs text-slate-500">Presenças por mês, conforme chamadas registradas.</p></div>{active && <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800" aria-live="polite">{active.label}: {active.value}%</span>}</div>
     <div className="mt-3 overflow-x-auto"><svg viewBox="0 0 600 190" role="group" aria-roledescription="gráfico de linhas" aria-label={`Frequência por mês: ${points.map((point) => `${point.label}, ${point.value}%`).join('; ')}`} className="h-[200px] min-w-[520px] w-full overflow-visible"><title>Evolução da frequência no semestre</title>
+      <defs><linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#2875df" stopOpacity=".2" /><stop offset="100%" stopColor="#2875df" stopOpacity=".015" /></linearGradient></defs>
       {[0, 1, 2, 3].map((line) => { const y = 32 + line * 37; const tick = 100 - line * 100 / 3; return <g key={line}><line x1="35" x2="574" y1={y} y2={y} stroke="#e8edf3" strokeDasharray="3 4" /><text x="27" y={y + 4} textAnchor="end" fill="#94a3b8" fontSize="9">{Math.round(tick)}%</text></g> })}
+      <path d={areaPath} fill={`url(#${fillId})`} />
       <path d={path} fill="none" stroke="#2875df" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((point) => <g key={point.label} onMouseEnter={() => setActive(point)} onMouseLeave={() => setActive(null)} onFocus={() => setActive(point)} onBlur={() => setActive(null)} tabIndex="0" role="button" aria-label={`${point.label}: ${point.value}%`} className="cursor-pointer"><circle cx={point.x} cy={point.y} r="12" fill="transparent" /><circle cx={point.x} cy={point.y} r={active?.label === point.label ? 6 : 4} fill="white" stroke="#2875df" strokeWidth="2.5" /><text x={point.x} y="174" textAnchor="middle" fill="#64748b" fontSize="10">{point.label}</text></g>)}
     </svg></div>
@@ -86,7 +90,7 @@ function HelpDialog({ onClose }) {
   }, [onClose])
 
   return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/35 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-    <section role="dialog" aria-modal="true" aria-labelledby="student-help-title" className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#d9e1eb] bg-white p-5 shadow-2xl sm:p-6">
+    <section role="dialog" aria-modal="true" aria-labelledby="student-help-title" className="help-panel max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#d9e1eb] bg-white p-5 shadow-2xl sm:p-6">
       <header className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-700">Ajuda do aluno</p><h2 id="student-help-title" className="mt-1 text-xl font-bold">Como acompanhar seu semestre</h2></div><button onClick={onClose} aria-label="Fechar ajuda" className="flex size-9 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-500 hover:bg-slate-50">×</button></header>
       <div className="mt-4 space-y-2">{[
         ['Notas', 'Esta área fica vazia enquanto não houver avaliações e notas integradas. O aluno não pode editar resultados.'],
@@ -138,7 +142,7 @@ export default function Alunos() {
   const semesterLabel = `${semester}º semestre de ${year}`
   const dateRangeLabel = semester === '1' ? 'jan–jun' : 'jul–dez'
 
-  return <div className="space-y-5 text-[#10213a]">
+  return <div className="student-dashboard space-y-5 text-[#10213a]">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Área do aluno</p><div className="mt-1 flex flex-wrap items-center gap-2"><h1 className="text-2xl font-bold">Olá, {DEMO_STUDENT.nome.split(' ')[0]}</h1><span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700">Perfil demonstrativo</span></div><p className="mt-1 text-sm text-slate-600">Acompanhe seus registros acadêmicos em um só lugar.</p></div>
       <button onClick={() => setHelpOpen(true)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" aria-label="Abrir ajuda da área do aluno">Ajuda</button>

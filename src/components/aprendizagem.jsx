@@ -21,7 +21,7 @@ const emptyForm = {
 
 function SummaryCard({ label, value }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4">
+    <article className="metric-card metric-card-amber rounded-lg border border-slate-200 bg-white p-4">
       <p className="text-xs text-slate-500">{label}</p>
       <strong className="mt-1 block text-2xl">{value}</strong>
     </article>
