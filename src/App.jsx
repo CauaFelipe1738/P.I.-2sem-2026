@@ -1,21 +1,20 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import menuIcon from './assets/menu-aberto.png'
 import visaoIcon from './assets/visaogeral.png'
 import desempenhoIcon from './assets/desempenho.png'
 import frequenciaIcon from './assets/frequencia.png'
 import aprenderIcon from './assets/aprender.png'
-import alunosResumoIcon from './assets/alunos vg.png'
-import calendarioIcon from './assets/calendario.png'
-import registrosIcon from './assets/registros.png'
 import alunoFoto from './assets/otimizadas/aluno.jpg'
 import professorFoto from './assets/otimizadas/professor.jpg'
 import coordenacaoFoto from './assets/otimizadas/diretor.jpg'
 import CatalogoAcademico from './components/CatalogoAcademico.jsx'
+import DashboardOverview from './components/DashboardOverview.jsx'
+import HelpCenter from './components/HelpCenter.jsx'
+import NotificationCenter from './components/NotificationCenter.jsx'
 import Aprendizagem from './components/aprendizagem.jsx'
 import Desempenho from './components/desempenho.jsx'
 import Frequencia from './components/frequencia.jsx'
 import { cursos as cursosAcademicos } from './data/dadosAcademicos.js'
-import { useAcademicData } from './data/academicoStore.js'
 import './App.css'
 
 // As telas de entrada e perfil são carregadas sob demanda para reduzir o bundle inicial.
@@ -35,16 +34,6 @@ const paginas = [
   { id: 'desempenho', nome: 'Desempenho', icone: desempenhoIcon, Componente: Desempenho },
   { id: 'frequencia', nome: 'Frequência', icone: frequenciaIcon, Componente: Frequencia },
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
-]
-
-// Uma lista única mantém consistentes as opções do gráfico e do formulário de observações.
-const dimensoesIniciais = [
-  { nome: 'Participação' },
-  { nome: 'Engajamento' },
-  { nome: 'Colaboração' },
-  { nome: 'Autonomia' },
-  { nome: 'Compreensão' },
-  { nome: 'Estratégias' },
 ]
 
 function Icon({ type, size = 20 }) {
@@ -70,10 +59,13 @@ function App() {
   const [paginaAtual, setPaginaAtual] = useState('login')
   const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
-  const [selecionadas, setSelecionadas] = useState(dimensoesIniciais.map(({ nome }) => nome))
   const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
-  const dadosAcademicos = useAcademicData()
-  const registrosCurso = dadosAcademicos.learning.filter((record) => record.courseId === cursoSelecionado.id)
+  const [ajudaAberta, setAjudaAberta] = useState(false)
+  const [modoAjuda, setModoAjuda] = useState('center')
+  const [tutorialNecessario, setTutorialNecessario] = useState(() => {
+    try { return localStorage.getItem('edulytics.tutorial.seen.v1') !== 'true' } catch { return true }
+  })
+  const [studentToOpen, setStudentToOpen] = useState(null)
 
   useEffect(() => {
     // popstate é necessário porque o histórico não atualiza o estado React sozinho.
@@ -85,12 +77,13 @@ function App() {
     return () => window.removeEventListener('popstate', sincronizarPagina)
   }, [])
 
-  function navegar(pagina, curso = cursoSelecionado) {
+  const navegar = useCallback((pagina, curso = cursoSelecionado) => {
     if (pagina === paginaAtual) return
+    if (pagina !== 'visao') setStudentToOpen(null)
     setCursoSelecionado(curso)
     window.history.pushState({ pagina }, '')
     setPaginaAtual(pagina)
-  }
+  }, [cursoSelecionado, paginaAtual])
 
   useEffect(() => {
     function fecharMenuPeloTeclado(event) {
@@ -101,13 +94,24 @@ function App() {
     return () => window.removeEventListener('keydown', fecharMenuPeloTeclado)
   }, [])
 
-  function alternarDimensao(nome) {
-    setSelecionadas((atuais) =>
-      atuais.includes(nome)
-        ? atuais.filter((item) => item !== nome)
-        : [...atuais, nome],
-    )
+  const abrirPerfilDoAlerta = useCallback((alerta) => {
+    const curso = cursosAcademicos.find((item) => item.nome === alerta.student.curso) || cursosAcademicos[0]
+    setStudentToOpen({ studentId: alerta.student.id, requestId: `${Date.now()}-${Math.random()}` })
+    if (paginaAtual === 'visao') setCursoSelecionado(curso)
+    else navegar('visao', curso)
+  }, [navegar, paginaAtual])
+
+  const limparEstudanteSelecionado = useCallback(() => setStudentToOpen(null), [])
+
+  function fecharAjuda(concluiuTutorial = modoAjuda === 'tutorial') {
+    setAjudaAberta(false)
+    if (concluiuTutorial) {
+      setTutorialNecessario(false)
+      try { localStorage.setItem('edulytics.tutorial.seen.v1', 'true') } catch { /* A ajuda continua acessível manualmente nesta sessão. */ }
+    }
   }
+
+  const tutorialInicial = paginaAtual === 'visao' && tutorialNecessario && !ajudaAberta
 
   // Separar a entrada do shell evita carregar a navegação acadêmica nas telas públicas.
   if (paginaAtual === 'login') {
@@ -156,12 +160,16 @@ function App() {
   return (
     <main className="dashboard min-h-screen bg-[#f7f9fc] px-5 py-6 text-[#10213a] sm:px-8">
       <header className="sticky top-0 z-20 relative mx-auto mb-7 flex max-w-[1500px] items-start justify-between border-b border-slate-200/70 bg-[#f7f9fc]/95 py-2 backdrop-blur">
-        <div className="mt-1 flex gap-2"><button onClick={() => window.history.back()} aria-label="Voltar à página anterior" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg text-slate-600 hover:bg-slate-50">‹</button><button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button></div>
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 text-center">
+        <div className="dashboard-header-back mt-1 flex gap-2"><button onClick={() => window.history.back()} aria-label="Voltar à página anterior" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg text-slate-600 hover:bg-slate-50">‹</button><button onClick={() => setMenuAberto(!menuAberto)} aria-label="Abrir menu" aria-expanded={menuAberto} className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><img src={menuIcon} alt="" className="menu-trigger-icon" /></button></div>
+        <div className="dashboard-title absolute left-1/2 top-0 -translate-x-1/2 text-center">
           <h1 className="text-2xl font-bold tracking-tight sm:text-[28px]">{paginaSelecionada?.nome}</h1>
           <p className="mt-1 whitespace-nowrap text-xs text-slate-600">{paginaAtual === 'visao' ? cursoSelecionado.nome : 'Apoio à observação docente · Escola Central'}</p>
         </div>
-        <button onClick={() => navegar('login')} aria-label="Sair" className="mt-1 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
+        <div className="dashboard-header-actions mt-1 flex items-center gap-1 sm:gap-2">
+          <NotificationCenter onOpenStudent={abrirPerfilDoAlerta} />
+          <button onClick={() => { setModoAjuda('center'); setAjudaAberta(true) }} aria-label="Abrir central de ajuda" title="Central de ajuda" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-sm font-bold text-slate-600 hover:bg-slate-50">?</button>
+          <button onClick={() => navegar('login')} aria-label="Sair" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"><Icon type="logout" /></button>
+        </div>
       </header>
 
       {/* Menu lateral compartilhado pelas áreas acadêmicas. */}
@@ -191,6 +199,7 @@ function App() {
               </button>
             ))}
           </nav>
+          <button onClick={() => { setModoAjuda('center'); setAjudaAberta(true); setMenuAberto(false) }} className="drawer-item flex w-full items-center gap-4 rounded-lg px-3 py-3 text-left text-[15px] font-semibold"><span className="flex size-[23px] items-center justify-center rounded-full border border-current text-xs">?</span>Central de ajuda</button>
           <div className="mt-4 flex items-center gap-3 border-t border-slate-200 px-1 pt-5"><div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dfebf8] text-sm font-bold text-[#315f91]">{(perfil || 'AC').slice(0, 2).toUpperCase()}</div><div><p className="text-sm font-semibold text-slate-800">{perfil || 'Alex Chen'}</p><p className="mt-1 text-sm text-slate-500">Perfil selecionado</p></div></div>
         </aside>
       </div>}
@@ -210,47 +219,17 @@ function App() {
             </section>
           )
         })()}
-        {/* A Visão Geral continua usando observações locais do protótipo; os dados acadêmicos ausentes não são estimados. */}
-        {/* Os dados acadêmicos ausentes são sinalizados; não são calculados a partir de estimativas. */}
-        {paginaAtual === 'visao' && <>
-        <section aria-label="Indicadores" className="dashboard-stats mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[
-            { label: 'Alunos matriculados', value: String(cursoSelecionado.alunos), badge: 'Neste curso', icon: alunosResumoIcon },
-            { label: 'Carga horária', value: cursoSelecionado.carga, badge: cursoSelecionado.status, icon: calendarioIcon },
-            { label: 'Registros de aprendizagem', value: String(registrosCurso.length), badge: 'Neste curso', icon: registrosIcon },
-          ].map((card) => <article key={card.label} className="flex min-h-[82px] items-center justify-between rounded-xl border border-[#d9e1eb] bg-white px-4 py-3 shadow-[0_2px_5px_rgba(15,23,42,0.04)]">
-            <div><p className="text-[12px] font-medium">{card.label}</p><div className="mt-1.5 flex items-center gap-2.5"><strong className="text-[24px] leading-none tracking-tight text-slate-950">{card.value}</strong><span className="rounded bg-[#e9f6f0] px-2 py-1 text-[10px] text-[#138466]">{card.badge}</span></div></div>
-            <span className="flex h-[32px] w-[32px] items-center justify-center rounded-lg bg-[#eaf3ff]"><img src={card.icon} alt="" className="dashboard-stat-icon" /></span>
-          </article>)}
-        </section>
-
-        <section className="mb-5 rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Curso selecionado</p><h2 className="mt-1 text-xl font-bold">{cursoSelecionado.nome}</h2><p className="mt-2 max-w-3xl text-sm text-slate-600">{cursoSelecionado.descricao}</p></div><div className="flex gap-3 text-sm"><span className="rounded-lg bg-slate-50 px-3 py-2"><strong>{cursoSelecionado.carga}</strong><br />Carga horária</span><span className="rounded-lg bg-slate-50 px-3 py-2"><strong>{cursoSelecionado.professor || 'Não informado'}</strong><br />Responsável</span></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-600">Selecionar curso<select value={cursoSelecionado.id} onChange={(event) => setCursoSelecionado(cursosAcademicos.find((curso) => curso.id === Number(event.target.value)))} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-800">{cursosAcademicos.map((curso) => <option key={curso.id} value={curso.id}>{curso.nome}</option>)}</select></label><div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">Notas, frequência, entregas, disciplinas e turmas não estão cadastradas. Indicadores correspondentes ficam indisponíveis até haver dados acadêmicos integrados.</div></div></section>
-
-        <div className="dashboard-panels grid items-stretch gap-5 lg:grid-cols-2">
-          <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
-            <h2 className="text-[14px] font-bold">Registros por característica</h2>
-            <p className="mt-3 text-[15px] text-slate-800">Selecione as dimensões que deseja considerar nesta leitura.</p>
-            <div className="my-4 flex flex-wrap gap-x-4 gap-y-2">
-              {dimensoesIniciais.map(({ nome }) => <label key={nome} className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-600"><input type="checkbox" checked={selecionadas.includes(nome)} onChange={() => alternarDimensao(nome)} className="h-4 w-4 accent-blue-600" />{nome}</label>)}
-            </div>
-            <div className="space-y-3.5">
-              {dimensoesIniciais.filter(({ nome }) => selecionadas.includes(nome)).map(({ nome }) => { const checks = { Participação: ['Participou das atividades'], Engajamento: ['Participou da aula', 'Participou das atividades'], Colaboração: ['Participou em grupo'], Autonomia: ['Realizou atividades sozinho'], Compreensão: ['Compreendeu o conteúdo'], Estratégias: ['Necessitou de auxílio', 'Desenvolveu habilidade esperada'] }[nome] || []; const total = registrosCurso.filter((record) => record.checks?.some((check) => checks.includes(check))).length; return <div key={nome} className="grid grid-cols-[minmax(100px,140px)_1fr_24px] items-center gap-3 text-[12px] text-slate-600"><span>{nome}</span><div className="h-[6px] overflow-hidden rounded-full bg-[#edf1f5]"><div className="h-full rounded-full bg-[#347fe0]" style={{ width: `${Math.min(100, total * 20)}%` }} /></div><strong className="font-semibold text-slate-700">{total}</strong></div>})}
-            </div>
-            <div className="mt-3 border-t border-[#dfe6ee] pt-3 text-[12px] text-slate-500">Indicadores calculados a partir dos registros salvos em Aprendizagem.</div>
-          </section>
-
-          <section className="dashboard-card rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)]">
-            <div className="flex items-center justify-between border-b border-[#dfe6ee] pb-2.5"><h2 className="text-[14px] font-bold">Registros recentes de aprendizagem</h2><button onClick={() => navegar('aprendizagem', cursoSelecionado)} className="rounded-lg bg-[#2875df] px-3 py-2 text-[12px] font-semibold text-white hover:bg-blue-700">Novo registro</button></div>
-            <div>{registrosCurso.slice(0, 4).map((record) => <article key={record.id} className="border-b border-[#dfe6ee] py-3 last:border-b-0">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"><h3 className="text-[15px] font-bold text-[#1760b5]">{record.studentName}</h3><span className="text-[11px] text-slate-500">{record.date}</span></div>
-              <p className="mt-0.5 text-[11px] text-slate-500">{record.subject} · {record.category}</p>
-              <p className="mt-2 text-[12px] leading-[18px] text-slate-600">{record.description}</p>
-              {(record.action || record.plan?.goal) && <p className="mt-2 text-[11px] text-slate-600"><strong className="text-slate-800">Próximo passo:</strong> {record.action || record.plan.goal}</p>}
-            </article>)}{registrosCurso.length === 0 && <p className="py-8 text-center text-sm text-slate-500">Nenhum registro de aprendizagem para este curso.</p>}</div>
-          </section>
-        </div>
-        </>}
+        {paginaAtual === 'visao' && <DashboardOverview
+          key={studentToOpen?.requestId || 'dashboard'}
+          course={cursoSelecionado}
+          onSelectCourse={setCursoSelecionado}
+          onNavigate={navegar}
+          studentToOpen={studentToOpen}
+          onStudentOpened={limparEstudanteSelecionado}
+        />}
       </div>
+
+      {(ajudaAberta || tutorialInicial) && <HelpCenter key={`${modoAjuda}-${tutorialInicial}`} open mode={tutorialInicial ? 'tutorial' : modoAjuda} page={paginaAtual} onClose={fecharAjuda} onNavigate={navegar} />}
 
     </main>
   )

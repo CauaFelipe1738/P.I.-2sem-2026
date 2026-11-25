@@ -100,6 +100,13 @@
   .component-page { min-height: 60vh; padding: 18px; }
   .dashboard > header { min-height: 44px; }
   .dashboard > header > div { max-width: calc(100vw - 128px); overflow: hidden; }
+  .dashboard > header > .dashboard-header-back { gap: 4px; overflow: visible; }
+  .dashboard > header > .dashboard-header-back > button,
+  .dashboard > header > .dashboard-header-actions > button,
+  .dashboard > header > .dashboard-header-actions > div > button { width: 34px; min-width: 34px; height: 34px; flex: 0 0 34px; padding-inline: 0; }
+  .dashboard > header > .dashboard-header-actions { gap: 4px; overflow: visible; }
+  .dashboard > header > .dashboard-title { max-width: calc(100vw - 210px); }
+  .dashboard-title p { display: none; }
   .dashboard > header h1 { overflow: hidden; font-size: 20px; text-overflow: ellipsis; white-space: nowrap; }
   .dashboard > header p { overflow: hidden; text-overflow: ellipsis; }
   .dashboard-stats { gap: 10px; }
