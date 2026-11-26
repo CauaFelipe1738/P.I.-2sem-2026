@@ -1,0 +1,74 @@
+name: Frontend & DevOps CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-quality:
+    name: Lint, Testes Unitários, Contrato HTTP & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run API & HTTP contract integration tests
+        run: npm run test:integration
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: edulytics-frontend-dist
+          path: dist/
+          retention-days: 3
+
+  devops-and-e2e-smoke:
+    name: DevOps Quality Gates & E2E Smoke
+    needs: frontend-quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: edulytics-frontend-dist
+          path: dist/
+
+      - name: Run DevOps gates and E2E smoke test
+        run: npm run test:devops

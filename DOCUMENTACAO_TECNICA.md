@@ -22,7 +22,8 @@
 │   │   ├── checklists.js                 # Domínios canônicos (status, tipos, corte 75%)
 │   │   └── academicMetrics.js            # Cálculos puros (frequência, média ponderada, CSV)
 │   ├── services/
-│   │   ├── apiClient.js                  # Cliente HTTP fetch + Bearer JWT + RFC 7807 + transporte mock
+│   │   ├── apiClient.js                  # Cliente HTTP fetch + Bearer JWT + timeout 408 + RFC 7807 + mock
+│   │   ├── healthService.js              # Consulta de saúde /actuator/health e latência da API
 │   │   ├── mockApiServer.js              # Simulador fiel ao contrato /api/v1 e seed PostgreSQL
 │   │   ├── authService.js                # /auth/login, /auth/me, /auth/logout
 │   │   ├── academicoService.js           # /cursos, /periodos, /turmas, /disciplinas, /alunos
@@ -37,7 +38,7 @@
 │   │   └── useApiQuery.js                # Hook com AbortController, loading, error e refetch
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── AppShell.jsx              # Menu lateral, header, barra de contexto e logout
+│   │   │   ├── AppShell.jsx              # Menu lateral, header, badge HTTP/Mock, contexto e logout
 │   │   │   └── ProtectedRoute.jsx        # Guarda de autenticação e autorização por cargo
 │   │   └── ui/
 │   │       ├── MetricCard.jsx
@@ -53,10 +54,14 @@
 │       ├── DesempenhoPage.jsx            # /professor/desempenho
 │       ├── RelatoriosPage.jsx            # /professor/relatorios
 │       └── PainelAlunoPage.jsx           # /aluno
+├── scripts/
+│   └── mock-http-server.mjs              # Servidor HTTP local /api/v1 + /actuator/health + CORS
 └── tests/
     ├── academicMetrics.test.js           # Testes unitários de métricas e CSV
     ├── apiClient.test.js                 # Testes unitários do cliente HTTP e ProblemDetail
-    └── servicesIntegration.test.js       # Testes de integração do contrato /api/v1 e RBAC/LGPD
+    ├── servicesIntegration.test.js       # Testes de integração do contrato /api/v1 e RBAC/LGPD
+    ├── httpContractIntegration.test.js   # Testes HTTP reais sobre TCP/fetch + CORS + 408/409/422
+    └── devops.test.js                    # Quality gates DevOps (segredos, CI, Docker, smoke E2E)
 ```
 
 ---
