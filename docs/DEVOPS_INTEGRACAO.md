@@ -41,6 +41,7 @@ npm run api:mock
 1. **[`.github/workflows/ci.yml`](../.github/workflows/ci.yml)** (`Frontend & DevOps CI`): roda `npm ci`, `npm run lint`, `npm run test:unit`, `npm run test:integration`, `npm run build` e `npm run test:devops` (varredura de segredos, validação de manifestos Docker/Nginx e smoke E2E de `dist/`).
 2. **[`.github/workflows/backend-ci.yml`](../.github/workflows/backend-ci.yml)** (`Backend Spring Boot CI`): configura JDK 17 + Gradle 8.13, aplica migrações Flyway `V1`–`V2` com `ddl-auto=validate` e executa `DomainRulesTest` (`#55`), `ApiIntegrationTest` (`MockMvc`, `#47`) e `bootJar`.
 3. **[`.github/workflows/fullstack-e2e.yml`](../.github/workflows/fullstack-e2e.yml)** (`Full-Stack E2E Integration`): empacota e inicializa o JAR real do Spring Boot na porta `8080`, aguarda `GET /actuator/health` responder `UP` e executa `npm run test:e2e:backend` exercitando todos os fluxos REST reais ponta a ponta.
+4. **[`.github/workflows/data-science-ci.yml`](../.github/workflows/data-science-ci.yml)** (`Data Science ETL & Analytics CI`): configura Python 3.12, instala dependências de `data_science/requirements.txt`, executa `pytest` (`#48`, `#49`, `#50`), roda o pipeline CLI `edulytics_ds.pipeline` e publica os relatórios JSON + gráficos PNG gerados.
 
 ---
 
