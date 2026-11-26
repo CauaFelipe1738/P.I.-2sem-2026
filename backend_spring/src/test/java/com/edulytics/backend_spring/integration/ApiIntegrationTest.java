@@ -73,11 +73,34 @@ class ApiIntegrationTest {
                 .header("Authorization", "Bearer " + profToken))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.totalElements").value(4))
-            .andExpect(jsonPath("$.content[0].nomeCompleto").exists());
+            .andExpect(jsonPath("$.content[0].nomeCompleto").exists())
+            .andExpect(jsonPath("$.content[0].turmaIds").isArray());
+
+        mockMvc.perform(get("/api/v1/alunos?turmaId=1")
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(3));
+
+        mockMvc.perform(get("/api/v1/auditoria")
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray());
+
+        mockMvc.perform(get("/actuator/metrics")
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isOk());
 
         String alunoToken = login("carla@exemplo.com", "123456");
 
         mockMvc.perform(get("/api/v1/alunos")
+                .header("Authorization", "Bearer " + alunoToken))
+            .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/v1/auditoria")
+                .header("Authorization", "Bearer " + alunoToken))
+            .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/actuator/metrics")
                 .header("Authorization", "Bearer " + alunoToken))
             .andExpect(status().isForbidden());
 
@@ -143,20 +166,36 @@ class ApiIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("REALIZADA"));
 
+        mockMvc.perform(put("/api/v1/aulas/" + aulaId)
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"conteudo\":\"Flyway V1/V2 atualizado via PUT\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.conteudo").value("Flyway V1/V2 atualizado via PUT"));
+
         mockMvc.perform(post("/api/v1/aulas/" + aulaId + "/frequencias")
                 .header("Authorization", "Bearer " + profToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"itens\":[{\"alunoId\":1,\"statusPresenca\":\"PRESENTE\"},{\"alunoId\":1,\"statusPresenca\":\"ATRASO\"}]}"))
             .andExpect(status().isConflict());
 
-        mockMvc.perform(post("/api/v1/aulas/" + aulaId + "/frequencias")
+        MvcResult freqLoteRes = mockMvc.perform(post("/api/v1/aulas/" + aulaId + "/frequencias")
                 .header("Authorization", "Bearer " + profToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"itens\":[{\"alunoId\":1,\"statusPresenca\":\"PRESENTE\",\"checklistAula\":[\"Participou da aula\"]},{\"alunoId\":2,\"statusPresenca\":\"ATRASO\"}]}"))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$[1].presente").value(true));
+            .andExpect(jsonPath("$[1].presente").value(true))
+            .andReturn();
+        long freqDiegoId = objectMapper.readTree(freqLoteRes.getResponse().getContentAsString()).get(1).get("id").asLong();
 
-        // Avaliação + Nota (422 nota > valorTotal, 200 nota válida, 200 corrigir)
+        mockMvc.perform(put("/api/v1/frequencias/" + freqDiegoId)
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"statusPresenca\":\"FALTA_JUSTIFICADA\",\"justificativa\":\"Atestado\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.presente").value(false));
+
+        // Avaliação + Nota (422 nota > valorTotal, PUT avaliação, 200 nota válida, 200 corrigir)
         MvcResult avRes = mockMvc.perform(post("/api/v1/avaliacoes")
                 .header("Authorization", "Bearer " + profToken)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -164,6 +203,33 @@ class ApiIntegrationTest {
             .andExpect(status().isCreated())
             .andReturn();
         long avId = objectMapper.readTree(avRes.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(put("/api/v1/avaliacoes/" + avId)
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nomeAvaliacao\":\"Prova MockMvc Editada\",\"peso\":3}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nomeAvaliacao").value("Prova MockMvc Editada"));
+
+        // Matrícula turma 2 -> TRANCAR (200) e tentativa CONCLUIR pós-trancamento (422)
+        MvcResult alunosT2 = mockMvc.perform(get("/api/v1/turmas/2/alunos?status=TODOS")
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isOk())
+            .andReturn();
+        long matT2Id = objectMapper.readTree(alunosT2.getResponse().getContentAsString()).get(0).get("matriculaId").asLong();
+
+        mockMvc.perform(patch("/api/v1/matriculas/" + matT2Id + "/status")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"acao\":\"TRANCAR\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("TRANCADA"));
+
+        mockMvc.perform(patch("/api/v1/matriculas/" + matT2Id + "/status")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"acao\":\"CONCLUIR\"}"))
+            .andExpect(status().isUnprocessableEntity());
 
         mockMvc.perform(put("/api/v1/avaliacoes/" + avId + "/notas/1")
                 .header("Authorization", "Bearer " + profToken)
