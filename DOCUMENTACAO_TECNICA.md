@@ -19,8 +19,8 @@ ficam no armazenamento local do navegador.
 - Registro, edição e consulta local de chamadas e observações pedagógicas.
 - Registro de planos de acompanhamento associados aos dados de aprendizagem.
 - Indicadores calculados a partir dos registros locais de frequência e aprendizagem.
-- Seleção de perfil na entrada. As áreas de aluno e coordenação são telas
-  demonstrativas, sem dados institucionais conectados.
+- Seleção entre os perfis de aluno e professor. A área do aluno é demonstrativa,
+  sem vínculo com dados institucionais.
 
 ## Tecnologias
 
@@ -74,8 +74,8 @@ roteamento, cliente HTTP, ORM ou driver de banco de dados.
 - **`aprendizagem.jsx`** registra observações pedagógicas e planos, além de permitir
   consultar e editar os registros locais.
 - **`desempenho.jsx`** deriva indicadores e alertas dos dados locais disponíveis.
-- **`alunos.jsx` e `coodernador.jsx`** são telas demonstrativas sem integração com
-  registros acadêmicos.
+- **`alunos.jsx`** apresenta ao estudante uma consulta demonstrativa de frequência
+  e atividades registradas localmente, sem notas ou vínculo institucional.
 - **`dadosAcademicos.js`** fornece os cursos e alunos usados pelos formulários e filtros.
 - **`academicoStore.js`** centraliza a leitura, normalização, persistência e notificação
   das áreas que usam registros de frequência e aprendizagem.
@@ -85,8 +85,8 @@ roteamento, cliente HTTP, ORM ou driver de banco de dados.
 1. O Vite serve `index.html`; `src/main.jsx` monta o componente principal React.
 2. `App.jsx` inicia na tela de login. O formulário exige e-mail e senha, mas, por não
    existir serviço de autenticação, o avanço é demonstrativo.
-3. Após a entrada, a pessoa escolhe um perfil. Professor abre o catálogo; aluno e
-   coordenação abrem suas telas demonstrativas.
+3. Após a entrada, a pessoa escolhe um perfil. Professor abre o catálogo e o painel;
+   aluno abre a área demonstrativa de consulta.
 4. No painel, o menu e os atalhos de teclado alteram a página ativa. `pushState` e
    `popstate` mantêm essa navegação compatível com voltar e avançar do navegador.
 5. Os formulários de Frequência e Aprendizagem criam objetos JavaScript e os enviam às
@@ -155,7 +155,8 @@ externo obrigatório configurado no repositório.
   sincronização entre usuários e dispositivos.
 - Catálogo, matrículas, professores e alguns números são dados estáticos de
   demonstração; devem ser substituídos por dados institucionais antes de uso real.
-- As áreas do aluno e da coordenação ainda não apresentam dados acadêmicos.
+- A área do aluno ainda não apresenta notas, matrícula ou dados acadêmicos
+  institucionais integrados.
 - Não há módulo de notas. Por isso, indicadores de médias, aprovação e evolução de
   avaliações não são calculados.
 - A persistência local não deve ser usada para armazenar dados pessoais reais sem

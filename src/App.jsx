@@ -6,7 +6,6 @@ import frequenciaIcon from './assets/frequencia.png'
 import aprenderIcon from './assets/aprender.png'
 import alunoFoto from './assets/otimizadas/aluno.jpg'
 import professorFoto from './assets/otimizadas/professor.jpg'
-import coordenacaoFoto from './assets/otimizadas/diretor.jpg'
 import CatalogoAcademico from './components/CatalogoAcademico.jsx'
 import DashboardOverview from './components/DashboardOverview.jsx'
 import HelpCenter from './components/HelpCenter.jsx'
@@ -21,7 +20,6 @@ import './App.css'
 const Login = lazy(() => import('./components/Login.jsx'))
 const Alunos = lazy(() => import('./components/alunos.jsx'))
 const Professor = lazy(() => import('./components/professor.jsx'))
-const Coordenador = lazy(() => import('./components/coodernador.jsx'))
 const carregando = (
   <div className="loading-screen" role="status" aria-label="Carregando">
     <span className="loading-spinner" aria-hidden="true" />
@@ -35,6 +33,13 @@ const paginas = [
   { id: 'frequencia', nome: 'Frequência', icone: frequenciaIcon, Componente: Frequencia },
   { id: 'aprendizagem', nome: 'Aprendizagem', icone: aprenderIcon, Componente: Aprendizagem },
 ]
+const rotasDaAplicacao = new Set([
+  'login',
+  'perfil',
+  'aluno',
+  'professor',
+  ...paginas.map(({ id }) => id),
+])
 
 function Icon({ type, size = 20 }) {
   const common = {
@@ -69,16 +74,25 @@ function App() {
 
   useEffect(() => {
     // popstate é necessário porque o histórico não atualiza o estado React sozinho.
-    if (!window.history.state?.pagina) window.history.replaceState({ pagina: 'login' }, '')
+    if (!rotasDaAplicacao.has(window.history.state?.pagina)) {
+      window.history.replaceState({ pagina: 'login' }, '')
+    }
     const sincronizarPagina = (event) => {
-      if (event.state?.pagina) setPaginaAtual(event.state.pagina)
+      const pagina = event.state?.pagina
+      if (rotasDaAplicacao.has(pagina)) {
+        setPaginaAtual(pagina)
+        return
+      }
+
+      window.history.replaceState({ pagina: 'login' }, '')
+      setPaginaAtual('login')
     }
     window.addEventListener('popstate', sincronizarPagina)
     return () => window.removeEventListener('popstate', sincronizarPagina)
   }, [])
 
   const navegar = useCallback((pagina, curso = cursoSelecionado) => {
-    if (pagina === paginaAtual) return
+    if (!rotasDaAplicacao.has(pagina) || pagina === paginaAtual) return
     if (pagina !== 'visao') setStudentToOpen(null)
     setCursoSelecionado(curso)
     window.history.pushState({ pagina }, '')
@@ -122,7 +136,6 @@ function App() {
     const perfis = [
       { nome: 'Aluno', detalhe: 'Acompanhe seu percurso de aprendizagem.', imagem: alunoFoto, destino: 'aluno' },
       { nome: 'Professor', detalhe: 'Registre observações e acompanhe suas turmas.', imagem: professorFoto, destino: 'professor' },
-      { nome: 'Coordenação', detalhe: 'Consulte indicadores e informações da escola.', imagem: coordenacaoFoto, destino: 'coordenador' },
     ]
 
     return (
@@ -153,7 +166,6 @@ function App() {
 
   if (paginaAtual === 'aluno') return <Suspense fallback={carregando}><PerfilPage Componente={Alunos} perfil={perfil} onTrocarPerfil={() => { setPerfil(null); navegar('perfil') }} onSair={() => { setPerfil(null); navegar('login') }} aluno /></Suspense>
   if (paginaAtual === 'professor') return <Suspense fallback={carregando}><PerfilPage Componente={Professor} perfil={perfil} onTrocarPerfil={() => { setPerfil(null); navegar('perfil') }} onSair={() => { setPerfil(null); navegar('login') }} professor onAbrirVisaoGeral={(curso) => navegar('visao', curso)} /></Suspense>
-  if (paginaAtual === 'coordenador') return <Suspense fallback={carregando}><PerfilPage Componente={Coordenador} perfil={perfil} onTrocarPerfil={() => { setPerfil(null); navegar('perfil') }} onSair={() => { setPerfil(null); navegar('login') }} /></Suspense>
 
   const paginaSelecionada = paginas.find(({ id }) => id === paginaAtual)
 
