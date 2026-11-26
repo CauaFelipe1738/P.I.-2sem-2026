@@ -1006,6 +1006,130 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
     return computeIndicators(query)
   }
 
+  if (method === 'GET' && cleanPath === '/indicadores/analytics') {
+    requireProfessor(user)
+    const turmasFiltradas = db.turmas.filter(
+      (t) =>
+        (!query.cursoId || t.cursoId === Number(query.cursoId)) &&
+        (!query.turmaId || t.id === Number(query.turmaId)),
+    )
+    const pearsonX = []
+    const pearsonY = []
+    const resumoPorTurma = []
+    const alunosEmRisco = []
+
+    for (const turma of turmasFiltradas) {
+      const curso = db.cursos.find((c) => c.id === turma.cursoId)
+      const dtIds = new Set(db.disciplinasTurma.filter((dt) => dt.turmaId === turma.id).map((dt) => dt.id))
+      const aulaIds = new Set(db.aulas.filter((a) => dtIds.has(a.disciplinaTurmaId)).map((a) => a.id))
+      const freqsTurma = db.frequencias.filter((f) => aulaIds.has(f.aulaId))
+      const avMap = new Map(
+        db.avaliacoes
+          .filter((av) => dtIds.has(av.disciplinaTurmaId) && (!query.periodoId || av.periodoId === Number(query.periodoId)))
+          .map((av) => [av.id, av]),
+      )
+      const notasTurma = db.alunoAvaliacoes
+        .filter((n) => avMap.has(n.avaliacaoId))
+        .map((n) => ({ ...n, valorTotal: avMap.get(n.avaliacaoId).valorTotal, peso: avMap.get(n.avaliacaoId).peso }))
+
+      const alunoIds = [
+        ...new Set(db.matriculas.filter((m) => m.turmaId === turma.id && m.status === 'ATIVA').map((m) => m.alunoId)),
+      ]
+      let abaixo75 = 0
+      let comFreq = 0
+
+      for (const aid of alunoIds) {
+        const aluno = db.alunos.find((a) => a.id === aid)
+        const taxaAluno = calcularTaxaFrequencia(freqsTurma.filter((f) => f.alunoId === aid))
+        if (taxaAluno !== null) {
+          comFreq += 1
+          if (taxaAluno < CORTE_PRESENCA_PERCENTUAL) abaixo75 += 1
+        }
+        const mediaAluno = calcularMediaPonderada(notasTurma.filter((n) => n.alunoId === aid))
+        if (taxaAluno !== null && mediaAluno !== null) {
+          pearsonX.push(taxaAluno)
+          pearsonY.push(mediaAluno)
+        }
+        const occ = db.comentarios.filter(
+          (c) =>
+            c.alunoId === aid &&
+            (c.disciplinaTurmaId === null || dtIds.has(c.disciplinaTurmaId)) &&
+            (c.classificacao === 'ATENCAO' || c.classificacao === 'NEGATIVO'),
+        ).length
+
+        const fatores = []
+        let freqPts = 0
+        let notaPts = 0
+        if (taxaAluno !== null && taxaAluno < CORTE_PRESENCA_PERCENTUAL) {
+          freqPts = Math.min(50, Math.round((CORTE_PRESENCA_PERCENTUAL - taxaAluno) * 1.5) + (taxaAluno < 65 ? 10 : 0))
+          fatores.push(`Frequência em ${taxaAluno}% (abaixo do corte de ${CORTE_PRESENCA_PERCENTUAL}%)`)
+        }
+        if (mediaAluno !== null && mediaAluno < 7.0) {
+          notaPts = Math.min(35, Math.round((7.0 - mediaAluno) * 10.0) + (mediaAluno < 6.0 ? 5 : 0))
+          fatores.push(`Média ponderada ${mediaAluno < 6.0 ? 'crítica (< 6.0)' : 'abaixo de 7.0'}: ${mediaAluno}`)
+        }
+        const obsPts = Math.min(15, Math.round(occ * 7.5))
+        if (occ > 0) fatores.push(`${occ} registro(s) pedagógico(s) de atenção/negativo`)
+
+        const riskScore = Math.min(100, freqPts + notaPts + obsPts)
+        const nivelRisco = riskScore >= 55 ? 'ALTO' : riskScore >= 25 ? 'MEDIO' : 'BAIXO'
+        alunosEmRisco.push({
+          alunoId: aid,
+          alunoNome: aluno?.nomeCompleto || `Aluno #${aid}`,
+          turmaNome: turma.nomeTurma,
+          taxaFrequencia: taxaAluno,
+          mediaPonderada: mediaAluno,
+          ocorrenciasAtencao: occ,
+          riskScore,
+          nivelRisco,
+          fatores,
+        })
+      }
+
+      resumoPorTurma.push({
+        turmaId: turma.id,
+        turmaNome: turma.nomeTurma,
+        cursoNome: curso?.nome || '',
+        totalAlunos: alunoIds.length,
+        taxaFrequenciaMedia: calcularTaxaFrequencia(freqsTurma),
+        percentualAbaixo75: comFreq ? Math.round((abaixo75 * 100) / comFreq) : null,
+        mediaNotasPonderada: calcularMediaPonderada(notasTurma),
+      })
+    }
+
+    let correlacaoFrequenciaNota = null
+    if (pearsonX.length >= 2) {
+      const mx = pearsonX.reduce((s, v) => s + v, 0) / pearsonX.length
+      const my = pearsonY.reduce((s, v) => s + v, 0) / pearsonY.length
+      let num = 0
+      let dx2 = 0
+      let dy2 = 0
+      for (let i = 0; i < pearsonX.length; i += 1) {
+        const dx = pearsonX[i] - mx
+        const dy = pearsonY[i] - my
+        num += dx * dy
+        dx2 += dx * dx
+        dy2 += dy * dy
+      }
+      if (dx2 > 0 && dy2 > 0) {
+        correlacaoFrequenciaNota = Math.round((num / Math.sqrt(dx2 * dy2)) * 100) / 100
+      }
+    }
+
+    alunosEmRisco.sort((a, b) => b.riskScore - a.riskScore || a.alunoNome.localeCompare(b.alunoNome, 'pt-BR'))
+    return {
+      correlacaoFrequenciaNota,
+      cortePresencaPercentual: CORTE_PRESENCA_PERCENTUAL,
+      resumoPorTurma,
+      distribuicaoRisco: {
+        BAIXO: alunosEmRisco.filter((a) => a.nivelRisco === 'BAIXO').length,
+        MEDIO: alunosEmRisco.filter((a) => a.nivelRisco === 'MEDIO').length,
+        ALTO: alunosEmRisco.filter((a) => a.nivelRisco === 'ALTO').length,
+      },
+      alunosEmRisco,
+    }
+  }
+
   if (method === 'GET' && cleanPath === '/relatorios/academico') {
     requireProfessor(user)
     const indicadores = computeIndicators(query)

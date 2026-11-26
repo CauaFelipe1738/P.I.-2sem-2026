@@ -64,4 +64,14 @@ public class IndicadoresController {
     ) {
         return ResponseEntity.ok(indicadoresService.obterMeuDesempenho(user, disciplinaTurmaId));
     }
+
+    @GetMapping("/indicadores/analytics")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public ResponseEntity<AnalyticsAvancadoDTO> getAnalyticsAvancado(
+        @RequestParam(required = false) Long cursoId,
+        @RequestParam(required = false) Long turmaId,
+        @RequestParam(required = false) Long periodoId
+    ) {
+        return ResponseEntity.ok(indicadoresService.calcularAnalyticsAvancado(cursoId, turmaId, periodoId));
+    }
 }
