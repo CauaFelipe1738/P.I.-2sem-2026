@@ -6,7 +6,7 @@ import * as indicadoresService from '../services/indicadoresService.js'
 import { CORTE_PRESENCA_PERCENTUAL, TIPOS_COMENTARIO } from '../utils/checklists.js'
 import { formatarNota, formatarPercentual } from '../utils/academicMetrics.js'
 import MetricCard from '../components/ui/MetricCard.jsx'
-import { EmptyState, ErrorBanner, LoadingState } from '../components/ui/StateViews.jsx'
+import { EmptyState, ErrorBanner, LoadingState, StatusBadge } from '../components/ui/StateViews.jsx'
 
 export default function DesempenhoPage() {
   const { cursoId, turmaId, disciplinaTurmaId, periodoId } = useAcademic()
@@ -36,8 +36,15 @@ export default function DesempenhoPage() {
     { enabled: Boolean(cursoId) },
   )
 
+  const analyticsQuery = useApiQuery(
+    (signal) => indicadoresService.getAnalyticsAvancado({ cursoId, periodoId }, signal),
+    [cursoId, periodoId],
+    { enabled: Boolean(cursoId) },
+  )
+
   const alunos = Array.isArray(alunosQuery.data) ? alunosQuery.data : []
   const ind = indicadoresQuery.data
+  const analytics = analyticsQuery.data
   const totalComentarios = Math.max(1, ind?.totalComentarios || 0)
 
   return (
@@ -182,6 +189,125 @@ export default function DesempenhoPage() {
             )}
           </section>
         </div>
+      )}
+
+      {analytics && (
+        <section className="space-y-4 rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <h2 className="text-base font-bold text-[#10213a]">
+                Análise Estatística & Risco Acadêmico (Ciência de Dados)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Correlação de Pearson, comparativo por turma e score explicável de risco via{' '}
+                <code>GET /api/v1/indicadores/analytics</code>.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-800">
+                Pearson (Freq × Nota):{' '}
+                {analytics.correlacaoFrequenciaNota !== null && analytics.correlacaoFrequenciaNota !== undefined
+                  ? analytics.correlacaoFrequenciaNota.toFixed(2)
+                  : 'N/D'}
+              </span>
+              <StatusBadge value="ALTO" label={`Alto: ${analytics.distribuicaoRisco?.ALTO ?? 0}`} />
+              <StatusBadge value="MEDIO" label={`Médio: ${analytics.distribuicaoRisco?.MEDIO ?? 0}`} />
+              <StatusBadge value="BAIXO" label={`Baixo: ${analytics.distribuicaoRisco?.BAIXO ?? 0}`} />
+            </div>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Comparativo por turma (corte {CORTE_PRESENCA_PERCENTUAL}%)
+              </h3>
+              {analytics.resumoPorTurma?.length === 0 ? (
+                <EmptyState title="Sem dados por turma para o curso selecionado" />
+              ) : (
+                analytics.resumoPorTurma.map((t) => {
+                  const taxa = typeof t.taxaFrequenciaMedia === 'number' ? t.taxaFrequenciaMedia : 0
+                  return (
+                    <article key={t.turmaId} className="space-y-1.5 rounded-lg border border-slate-200 p-3 text-xs">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-sm text-[#10213a]">{t.turmaNome}</strong>
+                        <span className="text-slate-600">
+                          {t.totalAlunos} aluno(s) · Média {formatarNota(t.mediaNotasPonderada)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Frequência média: {formatarPercentual(t.taxaFrequenciaMedia)}</span>
+                        <span>Abaixo de 75%: {formatarPercentual(t.percentualAbaixo75)}</span>
+                      </div>
+                      <div
+                        role="progressbar"
+                        aria-label={`Frequência da turma ${t.turmaNome}`}
+                        aria-valuenow={taxa}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        className="h-2 overflow-hidden rounded-full bg-slate-100"
+                      >
+                        <div
+                          className={`h-full rounded-full ${taxa < CORTE_PRESENCA_PERCENTUAL ? 'bg-rose-500' : 'bg-[#2875df]'}`}
+                          style={{ width: `${Math.min(100, taxa)}%` }}
+                        />
+                      </div>
+                    </article>
+                  )
+                })
+              )}
+            </div>
+
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Priorização de acompanhamento (Score 0–100)
+              </h3>
+              {analytics.alunosEmRisco?.length === 0 ? (
+                <EmptyState title="Nenhum estudante avaliado para risco" />
+              ) : (
+                <div className="max-h-80 space-y-2 overflow-auto pr-1">
+                  {analytics.alunosEmRisco.map((item) => (
+                    <article key={`${item.turmaNome}-${item.alunoId}`} className="space-y-1.5 rounded-lg border border-slate-200 p-3 text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <strong className="text-sm text-[#10213a]">{item.alunoNome}</strong>
+                          <span className="ml-2 text-[11px] text-slate-500">{item.turmaNome}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-700">Score {item.riskScore}/100</span>
+                          <StatusBadge value={item.nivelRisco} />
+                        </div>
+                      </div>
+                      <div
+                        role="progressbar"
+                        aria-label={`Score de risco de ${item.alunoNome}`}
+                        aria-valuenow={item.riskScore}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        className="h-1.5 overflow-hidden rounded-full bg-slate-100"
+                      >
+                        <div
+                          className={`h-full rounded-full ${
+                            item.nivelRisco === 'ALTO'
+                              ? 'bg-rose-500'
+                              : item.nivelRisco === 'MEDIO'
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${item.riskScore}%` }}
+                        />
+                      </div>
+                      {item.fatores?.length > 0 ? (
+                        <p className="text-[11px] text-slate-600">{item.fatores.join(' · ')}</p>
+                      ) : (
+                        <p className="text-[11px] text-emerald-700">Desempenho e frequência dentro da meta institucional.</p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       )}
     </div>
   )

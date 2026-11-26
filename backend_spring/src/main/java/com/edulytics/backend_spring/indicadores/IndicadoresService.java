@@ -304,6 +304,187 @@ public class IndicadoresService {
         );
     }
 
+    public AnalyticsAvancadoDTO calcularAnalyticsAvancado(Long cursoId, Long turmaId, Long periodoId) {
+        List<Turma> turmas = turmaRepository.findAll().stream()
+            .filter(t -> cursoId == null || Objects.equals(t.getCursoId(), cursoId))
+            .filter(t -> turmaId == null || Objects.equals(t.getId(), turmaId))
+            .toList();
+
+        Map<Long, String> cursoNomeMap = new HashMap<>();
+        cursoRepository.findAll().forEach(c -> cursoNomeMap.put(c.getId(), c.getNome()));
+
+        Map<Long, Aluno> alunoMap = new HashMap<>();
+        alunoRepository.findAll().forEach(a -> alunoMap.put(a.getId(), a));
+
+        List<DisciplinaTurma> todasDts = disciplinaTurmaRepository.findAll();
+        List<Aula> todasAulas = aulaRepository.findAll();
+        List<Frequencia> todasFreqs = frequenciaRepository.findAll();
+        List<Avaliacao> todasAvaliacoes = avaliacaoRepository.findAll().stream()
+            .filter(av -> periodoId == null || Objects.equals(av.getPeriodoId(), periodoId))
+            .toList();
+        List<AlunoAvaliacao> todasNotas = alunoAvaliacaoRepository.findAll();
+        List<Comentario> todosComentarios = comentarioRepository.findAll();
+        List<Matricula> todasMatriculas = matriculaRepository.findAll();
+
+        List<ResumoTurmaAnalyticsDTO> resumoPorTurma = new ArrayList<>();
+        List<RiscoAlunoDTO> alunosEmRisco = new ArrayList<>();
+        List<Double> pearsonX = new ArrayList<>();
+        List<Double> pearsonY = new ArrayList<>();
+
+        for (Turma turma : turmas) {
+            Set<Long> dtTurma = new HashSet<>();
+            for (DisciplinaTurma dt : todasDts) {
+                if (Objects.equals(dt.getTurmaId(), turma.getId())) dtTurma.add(dt.getId());
+            }
+            Set<Long> aulasTurma = new HashSet<>();
+            for (Aula a : todasAulas) {
+                if (dtTurma.contains(a.getDisciplinaTurmaId())) aulasTurma.add(a.getId());
+            }
+            List<Frequencia> freqsTurma = todasFreqs.stream()
+                .filter(f -> aulasTurma.contains(f.getAulaId()))
+                .toList();
+
+            Map<Long, Avaliacao> avTurmaMap = new HashMap<>();
+            for (Avaliacao av : todasAvaliacoes) {
+                if (dtTurma.contains(av.getDisciplinaTurmaId())) avTurmaMap.put(av.getId(), av);
+            }
+            List<AlunoAvaliacao> notasTurma = todasNotas.stream()
+                .filter(n -> avTurmaMap.containsKey(n.getAvaliacaoId()))
+                .toList();
+
+            Set<Long> alunosIdsTurma = new LinkedHashSet<>();
+            for (Matricula m : todasMatriculas) {
+                if (Objects.equals(m.getTurmaId(), turma.getId()) && m.getStatus() == Matricula.Status.ATIVA) {
+                    alunosIdsTurma.add(m.getAlunoId());
+                }
+            }
+
+            int abaixo75Count = 0;
+            int comFreqCount = 0;
+            for (Long aid : alunosIdsTurma) {
+                List<Frequencia> fAluno = freqsTurma.stream().filter(f -> Objects.equals(f.getAlunoId(), aid)).toList();
+                Integer taxaAluno = calcularTaxaFrequencia(fAluno);
+                if (taxaAluno != null) {
+                    comFreqCount += 1;
+                    if (taxaAluno < CORTE_PRESENCA_PERCENTUAL) abaixo75Count += 1;
+                }
+
+                List<AlunoAvaliacao> nAluno = notasTurma.stream().filter(n -> Objects.equals(n.getAlunoId(), aid)).toList();
+                Double mediaAluno = calcularMediaPonderada(nAluno, avTurmaMap);
+
+                if (taxaAluno != null && mediaAluno != null) {
+                    pearsonX.add(taxaAluno.doubleValue());
+                    pearsonY.add(mediaAluno);
+                }
+
+                int occ = (int) todosComentarios.stream()
+                    .filter(c -> Objects.equals(c.getAlunoId(), aid))
+                    .filter(c -> c.getDisciplinaTurmaId() == null || dtTurma.contains(c.getDisciplinaTurmaId()))
+                    .filter(c -> "ATENCAO".equalsIgnoreCase(c.getClassificacao()) || "NEGATIVO".equalsIgnoreCase(c.getClassificacao()))
+                    .count();
+
+                RiscoAlunoDTO risco = calcularRiscoEstudante(
+                    aid,
+                    alunoMap.get(aid) != null ? alunoMap.get(aid).getNomeCompleto() : "Aluno #" + aid,
+                    turma.getNomeTurma(),
+                    taxaAluno,
+                    mediaAluno,
+                    occ
+                );
+                alunosEmRisco.add(risco);
+            }
+
+            Integer pctAbaixo = comFreqCount > 0 ? (int) Math.round((abaixo75Count * 100.0) / comFreqCount) : null;
+            resumoPorTurma.add(new ResumoTurmaAnalyticsDTO(
+                turma.getId(),
+                turma.getNomeTurma(),
+                cursoNomeMap.getOrDefault(turma.getCursoId(), ""),
+                alunosIdsTurma.size(),
+                calcularTaxaFrequencia(freqsTurma),
+                pctAbaixo,
+                calcularMediaPonderada(notasTurma, avTurmaMap)
+            ));
+        }
+
+        alunosEmRisco.sort(Comparator.comparingInt(RiscoAlunoDTO::riskScore).reversed().thenComparing(RiscoAlunoDTO::alunoNome));
+
+        Map<String, Integer> distRisco = new LinkedHashMap<>();
+        distRisco.put("BAIXO", (int) alunosEmRisco.stream().filter(a -> "BAIXO".equals(a.nivelRisco())).count());
+        distRisco.put("MEDIO", (int) alunosEmRisco.stream().filter(a -> "MEDIO".equals(a.nivelRisco())).count());
+        distRisco.put("ALTO", (int) alunosEmRisco.stream().filter(a -> "ALTO".equals(a.nivelRisco())).count());
+
+        return new AnalyticsAvancadoDTO(
+            calcularCorrelacaoPearson(pearsonX, pearsonY),
+            CORTE_PRESENCA_PERCENTUAL,
+            resumoPorTurma,
+            distRisco,
+            alunosEmRisco
+        );
+    }
+
+    private RiscoAlunoDTO calcularRiscoEstudante(
+        Long alunoId,
+        String alunoNome,
+        String turmaNome,
+        Integer taxaFrequencia,
+        Double mediaPonderada,
+        int ocorrenciasAtencao
+    ) {
+        List<String> fatores = new ArrayList<>();
+        int freqPts = 0;
+        int notaPts = 0;
+
+        if (taxaFrequencia != null && taxaFrequencia < CORTE_PRESENCA_PERCENTUAL) {
+            int deficit = CORTE_PRESENCA_PERCENTUAL - taxaFrequencia;
+            freqPts = Math.min(50, (int) Math.round(deficit * 1.5) + (taxaFrequencia < 65 ? 10 : 0));
+            fatores.add("Frequência em " + taxaFrequencia + "% (abaixo do corte de " + CORTE_PRESENCA_PERCENTUAL + "%)");
+        }
+        if (mediaPonderada != null && mediaPonderada < 7.0) {
+            notaPts = Math.min(35, (int) Math.round((7.0 - mediaPonderada) * 10.0) + (mediaPonderada < 6.0 ? 5 : 0));
+            String rotulo = mediaPonderada < 6.0 ? "crítica (< 6.0)" : "abaixo de 7.0";
+            fatores.add("Média ponderada " + rotulo + ": " + mediaPonderada);
+        }
+        int obsPts = Math.min(15, (int) Math.round(Math.max(0, ocorrenciasAtencao) * 7.5));
+        if (ocorrenciasAtencao > 0) {
+            fatores.add(ocorrenciasAtencao + " registro(s) pedagógico(s) de atenção/negativo");
+        }
+
+        int score = Math.min(100, freqPts + notaPts + obsPts);
+        String nivel = score >= 55 ? "ALTO" : score >= 25 ? "MEDIO" : "BAIXO";
+
+        return new RiscoAlunoDTO(
+            alunoId,
+            alunoNome,
+            turmaNome,
+            taxaFrequencia,
+            mediaPonderada,
+            ocorrenciasAtencao,
+            score,
+            nivel,
+            fatores
+        );
+    }
+
+    private Double calcularCorrelacaoPearson(List<Double> xs, List<Double> ys) {
+        int n = xs.size();
+        if (n < 2 || n != ys.size()) return null;
+        double meanX = xs.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double meanY = ys.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double num = 0.0;
+        double denX = 0.0;
+        double denY = 0.0;
+        for (int i = 0; i < n; i++) {
+            double dx = xs.get(i) - meanX;
+            double dy = ys.get(i) - meanY;
+            num += dx * dy;
+            denX += dx * dx;
+            denY += dy * dy;
+        }
+        if (denX == 0.0 || denY == 0.0) return null;
+        double r = num / Math.sqrt(denX * denY);
+        return Math.round(r * 100.0) / 100.0;
+    }
+
     private Set<Long> filterContextIds(Long cursoId, Long turmaId, Long disciplinaTurmaId) {
         List<DisciplinaTurma> dts = disciplinaTurmaRepository.findAll();
         if (cursoId != null) {

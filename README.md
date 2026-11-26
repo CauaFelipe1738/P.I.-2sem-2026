@@ -160,6 +160,8 @@ erDiagram
 ## 7. Documentação Complementar e Entregáveis
 
 - **Relatório Acadêmico (Mini TCC ABNT)**: [`docs/MiniTCC_frontend2026.pdf`](./docs/MiniTCC_frontend2026.pdf)
+- **Dicionário de Dados & Governança LGPD**: [`docs/DICIONARIO_DADOS_LGPD.md`](./docs/DICIONARIO_DADOS_LGPD.md)
+- **Módulo de Ciência de Dados (ETL, Analytics & Gráficos)**: [`data_science/README.md`](./data_science/README.md)
 - **Documentação Técnica do Frontend e Integrações**: [`DOCUMENTACAO_TECNICA.md`](./DOCUMENTACAO_TECNICA.md)
 - **Integração HTTP, Testes e Esteira DevOps/CI**: [`docs/DEVOPS_INTEGRACAO.md`](./docs/DEVOPS_INTEGRACAO.md)
 - **Planejamento Arquitetural Completo (Banco, Backend, Frontend)**: [`docs/plano/`](./docs/plano/00-visao-geral.md)
@@ -169,8 +171,7 @@ erDiagram
 
 ## 8. Status da Entrega v1 e Próximas Etapas
 
-- **Frontend, Backend Spring Boot (`/api/v1`) e Integração**: todos os módulos acadêmicos da v1 (autenticação JWT stateless, catálogo e gestão de matrículas, aulas e frequência com 4 status/checklist, avaliações e notas, comentários com privacidade LGPD `visivelAluno`, planos de acompanhamento, indicadores com corte de **75%**, relatórios CSV/PDF, Painel do Aluno e observabilidade via SLF4J + `/actuator/metrics` + `/api/v1/auditoria`) estão implementados, containerizados e validados pelas 3 esteiras CI/CD no GitHub Actions.
+- **Ciência de Dados, Frontend, Backend Spring Boot (`/api/v1`) e Integração**: módulo Python (`data_science/`) de ETL, validação/deduplicação e score de risco acadêmico, Dicionário de Dados LGPD (`docs/DICIONARIO_DADOS_LGPD.md`) e todos os módulos da v1 estão implementados e validados pelas **4 esteiras CI/CD** no GitHub Actions (`ci.yml`, `backend-ci.yml`, `fullstack-e2e.yml`, `data-science-ci.yml`).
 - **Próximas etapas planejadas**:
-  1. Módulo de **Ciência de Dados** (issues `#48`, `#49`, `#50` — ETL, tratamento estatístico e séries avançadas).
-  2. Provisionamento manual na **AWS** (S3/CloudFront HTTPS + EC2 + Amazon RDS PostgreSQL 17 com migrações Flyway).
-  3. Envio de e-mail SMTP/SES para recuperação de senha institucional.
+  1. Provisionamento manual na **AWS** (S3/CloudFront HTTPS + EC2 + Amazon RDS PostgreSQL 17 com migrações Flyway).
+  2. Envio de e-mail SMTP/SES para recuperação de senha institucional.

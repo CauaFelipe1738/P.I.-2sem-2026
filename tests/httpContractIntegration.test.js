@@ -161,6 +161,12 @@ test('HTTP real: fluxo docente completo (cursos, turmas, aulas, frequência 409,
   const indicadores = await indicadoresService.getIndicadoresDesempenho({ cursoId, turmaId })
   assert.equal(indicadores.limitePresencaPercentual, 75)
   assert.ok(indicadores.totalAulasRegistradas >= 1)
+
+  const analytics = await indicadoresService.getAnalyticsAvancado({ cursoId })
+  assert.equal(analytics.cortePresencaPercentual, 75)
+  assert.ok(Array.isArray(analytics.resumoPorTurma) && analytics.resumoPorTurma.length >= 1)
+  assert.ok(Array.isArray(analytics.alunosEmRisco) && analytics.alunosEmRisco.length >= 1)
+  assert.ok(['BAIXO', 'MEDIO', 'ALTO'].includes(analytics.alunosEmRisco[0].nivelRisco))
 })
 
 test('HTTP real: RBAC bloqueia aluno (403) em rotas docentes e LGPD oculta visivelAluno=false', async () => {

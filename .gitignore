@@ -17,6 +17,16 @@ dist
 dist-ssr
 *.local
 
+# Python & Ciência de Dados (artefatos gerados)
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data_science/data/processed/
+data_science/data/rejected/
+data_science/data/output/
+data_science/data/run/
+data_science/data/ci_run/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

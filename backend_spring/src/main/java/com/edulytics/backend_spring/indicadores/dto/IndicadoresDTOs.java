@@ -90,4 +90,34 @@ public final class IndicadoresDTOs {
         List<NotaRelatorioDTO> notas,
         List<ComentarioDTO> comentarios
     ) {}
+
+    public record ResumoTurmaAnalyticsDTO(
+        Long turmaId,
+        String turmaNome,
+        String cursoNome,
+        int totalAlunos,
+        Integer taxaFrequenciaMedia,
+        Integer percentualAbaixo75,
+        Double mediaNotasPonderada
+    ) {}
+
+    public record RiscoAlunoDTO(
+        Long alunoId,
+        String alunoNome,
+        String turmaNome,
+        Integer taxaFrequencia,
+        Double mediaPonderada,
+        int ocorrenciasAtencao,
+        int riskScore,
+        String nivelRisco,
+        List<String> fatores
+    ) {}
+
+    public record AnalyticsAvancadoDTO(
+        Double correlacaoFrequenciaNota,
+        int cortePresencaPercentual,
+        List<ResumoTurmaAnalyticsDTO> resumoPorTurma,
+        Map<String, Integer> distribuicaoRisco,
+        List<RiscoAlunoDTO> alunosEmRisco
+    ) {}
 }

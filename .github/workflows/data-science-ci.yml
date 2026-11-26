@@ -1,0 +1,53 @@
+name: Data Science ETL & Analytics CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: data-science-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  data-science-ci:
+    name: ETL, Analytics, Gráficos & Pytest (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: data_science/requirements.txt
+
+      - name: Install Python dependencies
+        run: python -m pip install -r data_science/requirements.txt
+
+      - name: Run pytest suite
+        env:
+          PYTHONPATH: data_science/src
+        run: pytest -v data_science/tests
+
+      - name: Run full ETL, analytics and chart generation pipeline
+        env:
+          PYTHONPATH: data_science/src
+        run: |
+          python -m edulytics_ds.pipeline --raw-dir data_science/data/raw --output-dir data_science/data/ci_run
+          test -f data_science/data/ci_run/output/etl_report.json
+          test -f data_science/data/ci_run/output/analytics_summary.json
+          test -f data_science/data/ci_run/output/charts/frequencia_por_turma.png
+          test -f data_science/data/ci_run/output/charts/correlacao_frequencia_nota.png
+          test -f data_science/data/ci_run/output/charts/distribuicao_risco.png
+
+      - name: Upload Data Science reports and charts
+        uses: actions/upload-artifact@v4
+        with:
+          name: edulytics-data-science-output
+          path: data_science/data/ci_run/output/
+          retention-days: 3

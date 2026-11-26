@@ -1,0 +1,8 @@
+comentario_id,aluno_id,turma_id,tipo,classificacao,visivel_aluno,data_comentario,origem
+1,1,1,DESEMPENHO,POSITIVO,true,2026-05-19,seed_rds_simulado
+2,2,1,COMPORTAMENTO,NEUTRO,true,2026-05-20,seed_rds_simulado
+3,3,1,DESEMPENHO,ATENCAO,false,2026-05-21,seed_rds_simulado
+4,3,1,SAUDE,NEGATIVO,false,2026-05-25,seed_rds_simulado
+5,4,1,SOCIAL,ATENCAO,false,2026-05-26,seed_rds_simulado
+6,5,2,DESEMPENHO,POSITIVO,true,2026-05-22,seed_rds_simulado
+7,6,2,COMPORTAMENTO,NEGATIVO,false,2026-05-27,seed_rds_simulado

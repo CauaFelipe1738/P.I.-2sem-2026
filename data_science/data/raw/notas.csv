@@ -1,0 +1,17 @@
+nota_id,avaliacao_id,aluno_id,nota,data_registro,origem
+1,1,1,9.0,2026-05-20,planilha_docente
+2,2,1,9.5,2026-06-10,planilha_docente
+3,1,2,7.5,2026-05-20,planilha_docente
+4,2,2,7.0,2026-06-10,planilha_docente
+5,1,3,5.0,2026-05-20,planilha_docente
+6,2,3,4.5,2026-06-10,planilha_docente
+7,1,4,5.5,2026-05-20,planilha_docente
+8,2,4,5.5,2026-06-10,planilha_docente
+9,3,5,8.5,2026-05-21,planilha_docente
+10,4,5,9.0,2026-06-11,planilha_docente
+11,3,6,4.5,2026-05-21,planilha_docente
+12,4,6,4.0,2026-06-11,planilha_docente
+13,1,1,-1.5,2026-05-20,planilha_docente
+14,1,2,12.5,2026-05-20,planilha_docente
+15,1,1,8.8,2026-05-20,planilha_docente
+16,999,1,8.0,2026-05-20,planilha_docente

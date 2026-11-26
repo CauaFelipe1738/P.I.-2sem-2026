@@ -21,6 +21,7 @@ const SCAN_EXTENSIONS = new Set([
   '.java',
   '.sql',
   '.sh',
+  '.py',
 ])
 
 const IGNORED_DIRS = new Set([
@@ -180,5 +181,23 @@ test('DevOps Gate 5 (E2E Smoke): bundle dist/ serve rotas SPA e assets compilado
     assert.ok(assetText.length > 100)
   } finally {
     await new Promise((resolve) => staticServer.close(resolve))
+  }
+})
+
+test('DevOps Gate 6: artefatos de Ciência de Dados, Dicionário LGPD e workflow data-science-ci existem (#38, #48, #49, #50)', () => {
+  const dsCiPath = path.join(ROOT, '.github', 'workflows', 'data-science-ci.yml')
+  assert.equal(fs.existsSync(dsCiPath), true)
+  const dsCi = fs.readFileSync(dsCiPath, 'utf8')
+  assert.match(dsCi, /pytest/)
+  assert.match(dsCi, /edulytics_ds\.pipeline/)
+
+  assert.equal(fs.existsSync(path.join(ROOT, 'data_science', 'requirements.txt')), true)
+  assert.equal(fs.existsSync(path.join(ROOT, 'docs', 'DICIONARIO_DADOS_LGPD.md')), true)
+
+  for (const csvName of ['turmas.csv', 'alunos.csv', 'aulas.csv', 'frequencias.csv', 'avaliacoes.csv', 'notas.csv', 'comentarios.csv']) {
+    const csvPath = path.join(ROOT, 'data_science', 'data', 'raw', csvName)
+    assert.equal(fs.existsSync(csvPath), true, `Dataset bruto ausente: ${csvName}`)
+    const content = fs.readFileSync(csvPath, 'utf8')
+    assert.match(content, /origem/, `Dataset ${csvName} deve conter coluna de origem`)
   }
 })
