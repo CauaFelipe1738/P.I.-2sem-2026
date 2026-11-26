@@ -65,6 +65,25 @@ public class Aula {
         this.status = Status.PLANEJADA;
     }
 
+    public void atualizar(
+        LocalDate dataAula,
+        LocalTime horarioInicio,
+        LocalTime horarioFim,
+        String conteudo,
+        Status novoStatus
+    ) {
+        LocalTime ini = horarioInicio != null ? horarioInicio : this.horarioInicio;
+        LocalTime fim = horarioFim != null ? horarioFim : this.horarioFim;
+        if (ini != null && fim != null && !fim.isAfter(ini)) {
+            throw new DomainRuleException("Horário inválido", "O horário final deve ser posterior ao horário inicial.");
+        }
+        if (dataAula != null) this.dataAula = dataAula;
+        this.horarioInicio = ini;
+        this.horarioFim = fim;
+        if (conteudo != null) this.conteudo = conteudo;
+        if (novoStatus != null) this.status = novoStatus;
+    }
+
     public void realizar(String novoConteudo) {
         if (this.status == Status.CANCELADA) {
             throw new DomainRuleException("Transição inválida", "Aula cancelada não pode ser realizada.");
