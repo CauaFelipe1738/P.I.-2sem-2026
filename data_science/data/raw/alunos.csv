@@ -1,0 +1,7 @@
+aluno_id,turma_id,nome_completo,matricula_escolar,data_ingresso,status_matricula,origem
+1,1,Carla Souza,2026001,2026-02-02,ATIVA,seed_rds_simulado
+2,1,Diego Lima,2026002,2026-02-02,ATIVA,seed_rds_simulado
+3,1,Elisa Costa,2026003,2026-02-02,ATIVA,seed_rds_simulado
+4,1,Lucas Mendes,2026004,2026-02-02,ATIVA,seed_rds_simulado
+5,2,Felipe Rocha,2026005,2026-02-02,ATIVA,seed_rds_simulado
+6,2,Marina Alves,2026006,2026-02-02,ATIVA,seed_rds_simulado

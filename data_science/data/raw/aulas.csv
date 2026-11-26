@@ -1,0 +1,9 @@
+aula_id,turma_id,disciplina_nome,data_aula,horario_inicio,horario_fim,status,origem
+1,1,Desenvolvimento Web com React,2026-05-04,19:00,20:40,REALIZADA,seed_rds_simulado
+2,1,Desenvolvimento Web com React,2026-05-11,19:00,20:40,REALIZADA,seed_rds_simulado
+3,1,Desenvolvimento Web com React,2026-05-18,19:00,20:40,REALIZADA,seed_rds_simulado
+4,1,Desenvolvimento Web com React,2026-05-25,19:00,20:40,REALIZADA,seed_rds_simulado
+5,2,Banco de Dados Relacional,2026-05-05,08:00,09:40,REALIZADA,seed_rds_simulado
+6,2,Banco de Dados Relacional,2026-05-12,08:00,09:40,REALIZADA,seed_rds_simulado
+7,2,Banco de Dados Relacional,2026-05-19,08:00,09:40,REALIZADA,seed_rds_simulado
+8,2,Banco de Dados Relacional,2026-05-26,08:00,09:40,REALIZADA,seed_rds_simulado

@@ -1,0 +1,5 @@
+avaliacao_id,turma_id,periodo_nome,disciplina_nome,nome_avaliacao,data_avaliacao,valor_total,peso,origem
+1,1,1º Semestre 2026,Desenvolvimento Web com React,Prova 1,2026-05-18,10.0,2.0,seed_rds_simulado
+2,1,1º Semestre 2026,Desenvolvimento Web com React,Projeto Integrado,2026-06-08,10.0,3.0,seed_rds_simulado
+3,2,1º Semestre 2026,Banco de Dados Relacional,Prova SQL,2026-05-19,10.0,2.0,seed_rds_simulado
+4,2,1º Semestre 2026,Banco de Dados Relacional,Modelagem ER,2026-06-09,10.0,3.0,seed_rds_simulado
