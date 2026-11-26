@@ -167,8 +167,8 @@ erDiagram
 
 ---
 
-## 8. Limitações Conhecidas
+## 8. Limitações Conhecidas e Evolução
 
-- O módulo de backend Spring Boot ainda está em evolução incremental para implementar todos os endpoints especificados em [`docs/plano/02-backend.md`](./docs/plano/02-backend.md); por isso, o frontend inclui o adaptador `Mock /api/v1` fiel ao contrato REST para permitir validação completa e demonstração offline.
+- O backend Spring Boot em `backend_spring/` implementa todos os módulos principais de `/api/v1` (autenticação JWT, catálogo acadêmico, matrículas, aulas, frequência com 4 status/checklist, avaliações/notas, comentários LGPD, planos de acompanhamento, indicadores com corte de 75%, relatórios e `/me/desempenho`) versionados via Flyway (`V1`–`V2`), além de o frontend manter o adaptador `Mock /api/v1` para demonstração offline sem servidor.
 - A recuperação de senha exibe orientação para contato institucional até que um serviço SMTP/SES seja integrado ao backend.
 - A hospedagem inicial no Amazon S3 (`docs/frontend-s3.md`) opera via HTTP devido às restrições de laboratório AWS Academy; para produção, recomenda-se alinhamento HTTPS entre frontend e API na EC2.
