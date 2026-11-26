@@ -108,6 +108,10 @@ class ApiIntegrationTest {
                 .header("Authorization", "Bearer " + alunoToken))
             .andExpect(status().isForbidden());
 
+        mockMvc.perform(get("/api/v1/indicadores/analytics")
+                .header("Authorization", "Bearer " + alunoToken))
+            .andExpect(status().isForbidden());
+
         mockMvc.perform(get("/api/v1/auth/me"))
             .andExpect(status().isUnauthorized());
     }
@@ -275,6 +279,14 @@ class ApiIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.emitidoEm").exists())
             .andExpect(jsonPath("$.indicadores.limitePresencaPercentual").value(75));
+
+        mockMvc.perform(get("/api/v1/indicadores/analytics?cursoId=" + cursoId)
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.cortePresencaPercentual").value(75))
+            .andExpect(jsonPath("$.resumoPorTurma[0].turmaNome").exists())
+            .andExpect(jsonPath("$.alunosEmRisco[0].riskScore").isNumber())
+            .andExpect(jsonPath("$.distribuicaoRisco.BAIXO").isNumber());
 
         // Painel do Aluno (/me/desempenho) respeita visivelAluno=true
         MvcResult meRes = mockMvc.perform(get("/api/v1/me/desempenho")

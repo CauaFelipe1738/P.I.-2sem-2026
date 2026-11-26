@@ -189,6 +189,12 @@ test('E2E Full-Stack: serviços React comunicam em HTTP real contra Spring Boot 
   assert.ok(indicadores.taxaFrequenciaMedia >= 0)
   assert.ok(indicadores.mediaNotasPonderada > 0)
 
+  const analytics = await indicadoresService.getAnalyticsAvancado({ cursoId })
+  assert.equal(analytics.cortePresencaPercentual, 75)
+  assert.ok(analytics.resumoPorTurma.length >= 1)
+  assert.ok(analytics.alunosEmRisco.length >= 1)
+  assert.ok('BAIXO' in analytics.distribuicaoRisco)
+
   const relatorio = await indicadoresService.getRelatorioAcademico({ cursoId, turmaId })
   assert.ok(relatorio.emitidoEm)
   assert.ok(relatorio.frequencias.length >= 1)
@@ -198,6 +204,10 @@ test('E2E Full-Stack: serviços React comunicam em HTTP real contra Spring Boot 
   await assert.rejects(() => academicoService.listAlunos(), (err) => err.status === 403)
   await assert.rejects(
     () => indicadoresService.getIndicadoresDesempenho({ cursoId }),
+    (err) => err.status === 403,
+  )
+  await assert.rejects(
+    () => indicadoresService.getAnalyticsAvancado({ cursoId }),
     (err) => err.status === 403,
   )
 
