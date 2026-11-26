@@ -12,6 +12,9 @@ public class Aluno {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
     @Column(name = "nome_completo", nullable = false, length = 150)
     private String nomeCompleto;
 
@@ -33,6 +36,17 @@ public class Aluno {
         LocalDate dataIngresso,
         String matricula
     ) {
+        this(null, nomeCompleto, dataNascimento, dataIngresso, matricula);
+    }
+
+    public Aluno(
+        Long usuarioId,
+        String nomeCompleto,
+        LocalDate dataNascimento,
+        LocalDate dataIngresso,
+        String matricula
+    ) {
+        this.usuarioId = usuarioId;
         this.nomeCompleto = nomeCompleto;
         this.dataNascimento = dataNascimento;
         this.dataIngresso = dataIngresso;
@@ -41,6 +55,14 @@ public class Aluno {
 
     public Long getId() {
         return id;
+    }
+
+    public Long getUsuarioId() {
+        return usuarioId;
+    }
+
+    public void setUsuarioId(Long usuarioId) {
+        this.usuarioId = usuarioId;
     }
 
     public String getNomeCompleto() {
