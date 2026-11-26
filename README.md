@@ -1,320 +1,162 @@
-# [Desafios relacionados ao Monitoramento do Desempenho Acadêmico de Estudantes](https://plataforma.gpinovacao.senai.br/plataforma/demandas-da-industria/interna/12430)
+# EDULYTICS — Monitoramento do Desempenho Acadêmico de Estudantes
 
-## Proposta
-Muitas plataformas educacionais empregadas em escolas se limitam a registar dados referentes a notas e frequência de alunos. Este projeto é uma plataforma que propõe incluir outras informações valiosas como comportamento e evolução do desempenho para tomada de decisões pedagógicas personalizadas e aprimorar a eficiência dos professores otimizando um trabalho anteriormente manual.
-Essa plataforma tem como público-alvo principalmente os docentes, embora possa ser utilizado adicionalmente por alunos para que possam acessar suas próprias informações.
+> Plataforma web voltada ao acompanhamento pedagógico integral de estudantes, reunindo frequência, avaliações, observações comportamentais, planos de acompanhamento e indicadores para apoio à decisão docente, com painel dedicado para consulta estudantil.
 
-## Arquitetura
+[![Demanda SAGA SENAI](https://img.shields.io/badge/SAGA%20SENAI-Demanda%2012430-1767d2)](https://plataforma.gpinovacao.senai.br/plataforma/demandas-da-industria/interna/12430)
 
-### Diagrama de Entidade-Relacionamento
+---
+
+## 1. Problema Atendido e Público-Alvo
+
+Muitas plataformas educacionais restringem o acompanhamento acadêmico ao registro isolado de notas e faltas. Essa visão limitada dificulta a identificação precoce de dificuldades de aprendizagem, queda gradual de engajamento ou fatores comportamentais e sociais que impactam o desempenho do estudante.
+
+- **Público-alvo principal**: **Docentes** (registro de aulas, chamadas com checklist pedagógico, avaliações/notas, observações qualitativas, planos de acompanhamento e leitura de indicadores).
+- **Público-alvo secundário**: **Alunos** (consulta segura e isolada à própria frequência, notas e observações autorizadas para visualização estudantil).
+
+---
+
+## 2. Integrantes e Orientação
+
+- **Instituição**: SENAI Gaspar Ricardo Júnior — Sorocaba (SP), 2026
+- **Curso**: Tecnólogo em Análise e Desenvolvimento de Sistemas
+- **Integrantes**:
+  - Cauã Felipe Carvalho
+  - Guilherme Castro de Oliveira
+  - Guilherme Stecker de Almeida
+  - Johann Arruda Andrade
+  - Kevin Paião Reisauskas
+- **Orientador (Frameworks Front-End)**: Prof. Deivison Takatu
+
+---
+
+## 3. Tecnologias Utilizadas e Justificativas
+
+| Camada | Tecnologias | Justificativa |
+|---|---|---|
+| **Frontend** | React 19, Vite 8, Tailwind CSS 4, React Router DOM | Componentização reaproveitável, build rápido, estilização consistente e roteamento SPA com proteção por perfil. |
+| **Integração REST** | `fetch` nativo (`apiClient`), JWT Bearer, RFC 7807 (`ProblemDetail`) | Comunicação desacoplada com `/api/v1` sem dependências pesadas, tratamento padronizado de erros e suporte a `AbortController`. |
+| **Backend** | Java 17, Spring Boot, Spring Data JPA, Spring Security | API RESTful em camadas (*package-by-feature*), validação robusta e documentação OpenAPI/Swagger. |
+| **Banco de Dados** | PostgreSQL 17.11 (Amazon RDS) | Integridade referencial, constraints de domínio e suporte a `JSONB` para trilha de auditoria LGPD e checklists. |
+| **Testes** | `node:test` (`npm test`), ESLint, Vite Build | Validação automatizada de cálculos acadêmicos, transporte HTTP, contratos `/api/v1`, regras RBAC e LGPD. |
+
+---
+
+## 4. Funcionalidades Principais (v1)
+
+- **Autenticação JWT e Controle por Perfil (`/login`)**: login integrado a `/api/v1/auth/login`, restauração de sessão em `/api/v1/auth/me` e redirecionamento automático para `Professor` ou `Aluno` (sem perfil Coordenação na v1, conforme issue `#67`).
+- **Catálogo e Contexto Acadêmico Global (`/professor/cursos`, `/professor/visao-geral`)**: busca, filtro, ordenação e paginação de cursos, além de seleção persistente de `Curso → Turma → Disciplina` compartilhada entre todas as telas docentes.
+- **Aulas e Controle de Frequência (`/professor/frequencia`)**: criação/finalização/cancelamento de aulas e chamada em lote com os 4 status (`PRESENTE`, `AUSENTE`, `FALTA_JUSTIFICADA`, `ATRASO`), justificativa, checklist de aula e observação.
+- **Avaliações e Lançamento de Notas (`/professor/avaliacoes`)**: criação e correção de avaliações e lançamento de notas por aluno com validação de intervalo (`0 <= nota <= valorTotal`).
+- **Aprendizagem e Planos de Acompanhamento (`/professor/aprendizagem`)**: comentários pedagógicos tipificados (`COMPORTAMENTO`, `DESEMPENHO`, `SAUDE`, `SOCIAL`) com flag LGPD `visivelAluno` (`false` por padrão) e gestão de planos individuais.
+- **Indicadores e Relatórios (`/professor/desempenho`, `/professor/relatorios`)**: cálculo de taxa de frequência (corte oficial de **75%**, contando `ATRASO` como presença e `FALTA_JUSTIFICADA` como ausência), média ponderada (0–10), alertas de risco, exportação CSV (`;` + BOM UTF-8) e impressão PDF.
+- **Área do Aluno (`/aluno`)**: painel individual com taxa de frequência, média ponderada, notas, chamadas e somente observações pedagógicas autorizadas (`visivelAluno = true`).
+
+---
+
+## 5. Arquitetura e Modelo de Dados
+
+### 5.1 Fluxo da Solução
+
+```text
+Frontend React/Vite (BrowserRouter + AuthContext + AcademicContext + apiClient)
+        │  HTTPS / JSON (Authorization: Bearer <JWT> · RFC 7807 ProblemDetail)
+        ▼
+Backend Spring Boot (/api/v1/*) [ou adaptador Mock /api/v1 em desenvolvimento offline]
+        │  JPA / Flyway
+        ▼
+PostgreSQL 17.11 (Amazon RDS — monitoramento_academico)
+```
+
+### 5.2 Diagrama de Entidade-Relacionamento (v1 — atualizado sem `COORDENADOR`, issue `#67`)
+
 ```mermaid
 erDiagram
+  CARGO ||--o{ USUARIO : "classifica"
   USUARIO ||--o{ AUDITORIA : "gera"
-  USUARIO ||--o| PROFESSOR : "é"
-  USUARIO |o--o| ALUNO : "é"
-  USUARIO ||--o| COORDENADOR : "é"
-  CURSO ||--o{ TURMA : "tem"
+  USUARIO ||--o| PROFESSOR : "autentica"
+  USUARIO ||--o| ALUNO : "autentica"
+
+  CURSO ||--o{ TURMA : "possui"
+  PERIODO ||--o{ TURMA : "vigencia"
   TURMA ||--o{ DISCIPLINA_TURMA : "oferta"
-  DISCIPLINA ||--o{ DISCIPLINA_TURMA : "é ofertada"
+  DISCIPLINA ||--o{ DISCIPLINA_TURMA : "compoe"
+
+  PROFESSOR ||--o{ PROFESSOR_DISCIPLINA_TURMA : "leciona"
+  DISCIPLINA_TURMA ||--o{ PROFESSOR_DISCIPLINA_TURMA : "aloca"
+
+  ALUNO ||--o{ MATRICULA : "possui"
+  TURMA ||--o{ MATRICULA : "matricula"
+
   DISCIPLINA_TURMA ||--o{ AULA : "possui"
   PROFESSOR ||--o{ AULA : "ministra"
   AULA ||--o{ FREQUENCIA : "registra"
   ALUNO ||--o{ FREQUENCIA : "tem"
-  DISCIPLINA_TURMA ||--o{ AVALIACAO : "possui"
-  PROFESSOR ||--o{ AVALIACAO : "aplica"
-  AVALIACAO ||--o{ ALUNO_AVALIACAO : "gera nota"
+
+  DISCIPLINA_TURMA ||--o{ AVALIACAO : "aplica"
+  PROFESSOR ||--o{ AVALIACAO : "elabora"
+  PERIODO ||--o{ AVALIACAO : "pertence"
+  AVALIACAO ||--o{ ALUNO_AVALIACAO : "gera"
   ALUNO ||--o{ ALUNO_AVALIACAO : "recebe"
+
   ALUNO ||--o{ COMENTARIO : "recebe"
-  PROFESSOR ||--o{ COMENTARIO : "escreve"
-  DISCIPLINA_TURMA |o--o{ COMENTARIO : "contexto"
+  PROFESSOR ||--o{ COMENTARIO : "registra"
+  DISCIPLINA_TURMA |o--o{ COMENTARIO : "contextualiza"
 
-  USUARIO {
-    int id_usuario PK
-    varchar email UK
-    varchar senha_hash
-    timestamp data_criacao
-    timestamp ultimo_acesso
-    boolean ativo
-  }
-  AUDITORIA {
-    bigint id_auditoria PK
-    int id_usuario FK
-    varchar tabela_modificada
-    varchar operacao
-    jsonb dados_anteriores
-    jsonb dados_novos
-    timestamp timestamp
-    varchar endereco_ip
-  }
-  PROFESSOR {
-    int id_professor PK
-    int id_usuario FK
-    varchar nome_completo
-    date data_contratacao
-    varchar formacao
-  }
-  ALUNO {
-    int id_aluno PK
-    int id_usuario FK
-    varchar nome_completo
-    date data_nascimento
-    date data_ingresso
-    date data_desligamento
-    varchar status_matricula 
-    varchar matricula_escolar UK
-  }
-
-  COORDENADOR {
-    int id_coordenador PK
-    int id_usuario FK
-    varchar nome_completo
-    varchar escopo_responsabilidade
-  }
-  CURSO {
-    int id_curso PK
-    varchar nome_curso UK
-    text descricao
-    int carga_horaria
-    varchar status
-  }
-
-  TURMA {
-    int id_turma PK
-    int id_curso FK
-     int semestre
-    date data_inicio
-    date data_fim
-    varchar nome_turma
-    varchar turno
-  }
-  DISCIPLINA {
-    int id_disciplina PK
-    varchar nome_disciplina UK
-    text descricao
-    int carga_horaria
-  }
-  DISCIPLINA_TURMA {
-    int id_disciplina_turma PK
-    int id_disciplina FK
-    int id_turma FK
-  }
-  AULA {
-    int id_aula PK
-    int id_disciplina_turma FK
-    int id_professor FK
-    date data_aula
-    time horario_inicio
-    time horario_fim
-    text conteudo
-    varchar status
-  }
-  FREQUENCIA {
-    int id_frequencia PK
-    int id_aula FK
-    int id_aluno FK
-    boolean presente
-    text justificativa
-    timestamp data_registro
-  }
-  AVALIACAO {
-    int id_avaliacao PK
-    int id_disciplina_turma FK
-    int id_professor FK
-    varchar nome_avaliacao
-    varchar tipo_avaliacao
-    date data_avaliacao
-    decimal valor_total
-    decimal peso
-    varchar status
-  }
-  ALUNO_AVALIACAO {
-    int id_aluno_avaliacao PK
-    int id_aluno FK
-    int id_avaliacao FK
-    decimal nota
-    text observacao
-    timestamp data_registro
-  }
-  COMENTARIO {
-    int id_comentario PK
-    int id_aluno FK
-    int id_professor FK
-    int id_disciplina_turma FK
-    varchar titulo
-    varchar tipo
-    varchar classificacao
-    text descricao
-    timestamp data_comentario
-  }
-```
-### Diagrama de Classes
-```mermaid
-classDiagram
-  direction TB
-
-  class Usuario {
-    -Long id
-    -String email
-    -String senhaHash
-    -LocalDateTime dataCriacao
-    -LocalDateTime ultimoAcesso
-    -Boolean ativo
-    +registrarAcesso() void
-  }
-  class Auditoria {
-    -Long id
-    -String tabelaModificada
-    -Operacao operacao
-    -Map~String,Object~ dadosAnteriores
-    -Map~String,Object~ dadosNovos
-    -LocalDateTime timestamp
-    -String enderecoIp
-  }
-  class Professor {
-    -Long id
-    -String nomeCompleto
-    -LocalDate dataContratacao
-    -String formacao
-  }
-  class Aluno {
-    -Long id
-    -String nomeCompleto
-    -LocalDate dataNascimento
-    -LocalDate dataIngresso
-    -String matriculaEscolar
-    -LocalDate dataDesligamento
-    -StatusMatricula status
-    +concluir() void
-    +cancelar() void
-    +trancar() void
-  }
-  class Coordenador {
-    -Long id
-    -String nomeCompleto
-    -String escopoResponsabilidade
-  }
-  class Curso {
-    -Long id
-    -String nome
-    -String descricao
-    -Integer cargaHoraria
-    -StatusCurso status
-  }
-
-  class Turma {
-    -Long id
-    -String nome
-    -Turno turno
-    -Integer semestre
-    -LocalDate dataInicio
-    -LocalDate dataFim
-  }
-  class Disciplina {
-    -Long id
-    -String nome
-    -String descricao
-    -Integer cargaHoraria
-  }
-  class DisciplinaTurma {
-    -Long id
-  }
-  class Aula {
-    -Long id
-    -LocalDate data
-    -LocalTime horarioInicio
-    -LocalTime horarioFim
-    -String conteudo
-    -StatusAula status
-    +realizar() void
-    +cancelar() void
-  }
-  class Frequencia {
-    -Long id
-    -Boolean presente
-    -String justificativa
-    -LocalDateTime dataRegistro
-  }
-  class Avaliacao {
-    -Long id
-    -String nome
-    -TipoAvaliacao tipo
-    -String descricao
-    -LocalDate data
-    -BigDecimal valorTotal
-    -BigDecimal peso
-    -StatusAvaliacao status
-    +corrigir() void
-  }
-  class AlunoAvaliacao {
-    -Long id
-    -BigDecimal nota
-    -String observacao
-    -LocalDateTime dataRegistro
-  }
-  class Comentario {
-    -Long id
-    -String titulo
-    -TipoComentario tipo
-    -ClassificacaoComentario classificacao
-    -String descricao
-    -LocalDateTime dataComentario
-  }
-
-  Usuario "*" --> "1" Cargo : cargo
-  Auditoria "*" --> "0..1" Usuario : usuario
-  Professor "1" --> "1" Usuario : usuario
-  Coordenador "1" --> "1" Usuario : usuario
-  Aluno "1" --> "0..1" Usuario : usuario
-
-  Turma "*" --> "1" Curso : curso
-  Turma "*" --> "1" Periodo : periodo
-  DisciplinaTurma "*" --> "1" Disciplina : disciplina
-  DisciplinaTurma "*" --> "1" Turma : turma
-
-  Aula "*" --> "1" DisciplinaTurma : disciplinaTurma
-  Aula "*" --> "1" Professor : professor
-  Frequencia "*" --> "1" Aula : aula
-  Frequencia "*" --> "1" Aluno : aluno
-
-  Avaliacao "*" --> "1" DisciplinaTurma : disciplinaTurma
-  Avaliacao "*" --> "1" Professor : professor
-  Avaliacao "*" --> "1" Periodo : periodo
-  AlunoAvaliacao "*" --> "1" Aluno : aluno
-  AlunoAvaliacao "*" --> "1" Avaliacao : avaliacao
-
-  Comentario "*" --> "1" Aluno : aluno
-  Comentario "*" --> "1" Professor : professor
-  Comentario "*" --> "0..1" DisciplinaTurma : disciplinaTurma
+  ALUNO ||--o{ PLANO_ACOMPANHAMENTO : "possui"
+  PROFESSOR ||--o{ PLANO_ACOMPANHAMENTO : "elabora"
+  DISCIPLINA_TURMA |o--o{ PLANO_ACOMPANHAMENTO : "contextualiza"
 ```
 
-```mermaid
-classDiagram
-  direction TB
-  class Operacao { <> INSERT UPDATE DELETE }
-  class StatusCurso { <> ATIVO INATIVO SUSPENSO }
-  class Turno { <> MANHA TARDE NOITE }
-  class StatusAula { <> PLANEJADA REALIZADA CANCELADA }
-  class TipoAvaliacao { <> PROVA TRABALHO SEMINARIO CONTINUA }
-  class StatusAvaliacao { <> PLANEJADA REALIZADA CORRIGIDA }
-  class TipoComentario { <> COMPORTAMENTO DESEMPENHO SAUDE SOCIAL }
-  class ClassificacaoComentario { <> POSITIVO NEUTRO NEGATIVO }
-  class StatusMatricula { <> ATIVA CONCLUIDA CANCELADA TRANCADA }
-```
+---
 
-Usuario.registrarAcesso() atualiza ultimoAcesso.
-Aluno.concluir(), cancelar() e trancar() controlam as transições de status e a dataDesligamento.
-Aula.realizar() e cancelar() mudam o status da aula.
-Avaliacao.corrigir() muda o status para CORRIGIDA.
-Periodo.estaVigente() compara a data atual com dataInicio e dataFim.
+## 6. Instalação, Configuração e Execução Local
 
-### Critérios de Aceite
-- A plataforma permite selecionar turma e uma disciplina e exibe pelo menos dois indicadores calculados a partir dos dados coletados.
-- A plataforma consegue registrar dados que são guardado em um banco de dados usando integração por APIs
-- A plataforma deve estar posta em um serviço de nuvem para acesso remoto
-- Cada alteração de código enviada é testada automaticamente
-- O projeto está versionado promovendo a organização do projeto e sua rastreabilidade.
+### Pré-requisitos
+- Node.js 20+ e npm
+- (Opcional, para integração com API real) Java 17+ e backend Spring Boot em execução
 
-## Solução Proposta
-*Link do site implementado*
+### Passo a Passo
 
-*Imagens/Prints da plataforma mostrando os dados e funcionamento
+1. **Instale as dependências**:
+   ```bash
+   npm install
+   ```
+
+2. **Configure o ambiente** (opcional — sem `.env`, o frontend inicia automaticamente no modo `Mock /api/v1` compatível com o seed do PostgreSQL):
+   ```bash
+   cp .env.example .env
+   ```
+   Ajuste `VITE_API_URL` (ex.: `https://api.seu-dominio.com` ou `http://localhost:8080`) e `VITE_API_MODE=http`.
+
+   > **Credenciais de demonstração no modo Mock `/api/v1`** (espelhando o seed de `monitoramento_academico.sql`):
+   > - **Professor**: `ana@exemplo.com` / `123456` (ou `bruno@exemplo.com` / `123456`)
+   > - **Aluno**: `carla@exemplo.com` / `123456` (ou `diego@exemplo.com`, `elisa@exemplo.com`, `felipe@exemplo.com` / `123456`)
+
+3. **Execute o servidor de desenvolvimento**:
+   ```bash
+   npm run dev
+   ```
+
+4. **Execute testes, análise estática e build de produção**:
+   ```bash
+   npm test
+   npm run lint
+   npm run build
+   ```
+
+---
+
+## 7. Documentação Complementar e Entregáveis
+
+- **Relatório Acadêmico (Mini TCC ABNT)**: [`docs/MiniTCC_frontend2026.pdf`](./docs/MiniTCC_frontend2026.pdf)
+- **Documentação Técnica do Frontend e Integrações**: [`DOCUMENTACAO_TECNICA.md`](./DOCUMENTACAO_TECNICA.md)
+- **Planejamento Arquitetural Completo (Banco, Backend, Frontend)**: [`docs/plano/`](./docs/plano/00-visao-geral.md)
+- **Deploy Estático em Nuvem (Amazon S3)**: [`docs/frontend-s3.md`](./docs/frontend-s3.md)
+
+---
+
+## 8. Limitações Conhecidas
+
+- O módulo de backend Spring Boot ainda está em evolução incremental para implementar todos os endpoints especificados em [`docs/plano/02-backend.md`](./docs/plano/02-backend.md); por isso, o frontend inclui o adaptador `Mock /api/v1` fiel ao contrato REST para permitir validação completa e demonstração offline.
+- A recuperação de senha exibe orientação para contato institucional até que um serviço SMTP/SES seja integrado ao backend.
+- A hospedagem inicial no Amazon S3 (`docs/frontend-s3.md`) opera via HTTP devido às restrições de laboratório AWS Academy; para produção, recomenda-se alinhamento HTTPS entre frontend e API na EC2.
