@@ -17,6 +17,8 @@ export default function VisaoGeralPage() {
   const [modalAberto, setModalAberto] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
+  const [avisoMatricula, setAvisoMatricula] = useState('')
+  const [erroMatricula, setErroMatricula] = useState(null)
 
   const indicadoresQuery = useApiQuery(
     (signal) =>
@@ -39,14 +41,27 @@ export default function VisaoGeralPage() {
   )
 
   const alunosQuery = useApiQuery(
-    (signal) => academicoService.listAlunosByTurma(turmaId, undefined, signal),
+    (signal) => academicoService.listAlunosByTurma(turmaId, { status: 'TODOS' }, signal),
     [turmaId],
     { enabled: Boolean(turmaId) },
   )
 
   const ind = indicadoresQuery.data
   const comentarios = comentariosQuery.data?.content || []
-  const alunosTurma = Array.isArray(alunosQuery.data) ? alunosQuery.data : []
+  const todosAlunosTurma = Array.isArray(alunosQuery.data) ? alunosQuery.data : []
+  const alunosTurma = todosAlunosTurma.filter((a) => a.statusMatricula === 'ATIVA')
+
+  async function alterarStatusMatricula(aluno, acao) {
+    setErroMatricula(null)
+    setAvisoMatricula('')
+    try {
+      await academicoService.updateMatriculaStatus(aluno.matriculaId, acao)
+      setAvisoMatricula(`Matrícula de ${aluno.nomeCompleto} atualizada (${acao}).`)
+      alunosQuery.refetch()
+    } catch (error) {
+      setErroMatricula(error)
+    }
+  }
 
   async function salvarComentario(event) {
     event.preventDefault()
@@ -220,6 +235,74 @@ export default function VisaoGeralPage() {
           )}
         </section>
       </div>
+
+      <section className="rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-[#10213a]">Gestão de matrículas da turma</h3>
+            <p className="text-xs text-slate-500">
+              Transições de status integradas via <code>PATCH /api/v1/matriculas/{'{id}'}/status</code>.
+            </p>
+          </div>
+          <span className="text-xs text-slate-500">{todosAlunosTurma.length} matrícula(s)</span>
+        </div>
+
+        {erroMatricula && <div className="mt-3"><ErrorBanner error={erroMatricula} /></div>}
+        {avisoMatricula && (
+          <p role="status" className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+            {avisoMatricula}
+          </p>
+        )}
+
+        {todosAlunosTurma.length === 0 ? (
+          <div className="mt-3">
+            <EmptyState title="Nenhuma matrícula encontrada para a turma" />
+          </div>
+        ) : (
+          <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+            {todosAlunosTurma.map((a) => (
+              <article key={a.matriculaId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-3 text-xs">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <strong className="text-sm text-[#10213a]">{a.nomeCompleto}</strong>
+                    <StatusBadge value={a.statusMatricula} />
+                  </div>
+                  <p className="mt-0.5 text-slate-500">Matrícula {a.matriculaEscolar}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {a.statusMatricula === 'ATIVA' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => alterarStatusMatricula(a, 'TRANCAR')}
+                        className="rounded border border-amber-300 bg-amber-50 px-2.5 py-1 font-semibold text-amber-800 hover:bg-amber-100"
+                      >
+                        Trancar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => alterarStatusMatricula(a, 'CONCLUIR')}
+                        className="rounded border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-800 hover:bg-emerald-100"
+                      >
+                        Concluir
+                      </button>
+                    </>
+                  )}
+                  {a.statusMatricula !== 'CONCLUIDA' && a.statusMatricula !== 'CANCELADA' && (
+                    <button
+                      type="button"
+                      onClick={() => alterarStatusMatricula(a, 'CANCELAR')}
+                      className="rounded border border-rose-300 bg-rose-50 px-2.5 py-1 font-semibold text-rose-700 hover:bg-rose-100"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       {modalAberto && (
         <div

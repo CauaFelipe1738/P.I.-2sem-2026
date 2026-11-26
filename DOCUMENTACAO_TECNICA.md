@@ -93,6 +93,7 @@ Os testes automatizados utilizam o runner nativo do Node.js (`node --test tests/
 
 | Verificação | Comando | Escopo Coberto | Resultado Observado |
 |---|---|---|---|
-| **Testes unitários e integração** | `npm test` | `tests/academicMetrics.test.js` (4 casos: presença, taxa, média ponderada, CSV BOM/escape), `tests/apiClient.test.js` (3 casos: Bearer + query, 204, RFC 7807 + evento 401), `tests/servicesIntegration.test.js` (4 casos: login/logout, fluxo de aulas + 409 + edição, avaliações/notas 422 + indicadores 75%, LGPD `visivelAluno` + RBAC 403). | **11/11 aprovados** (`0` falhas) |
+| **Testes unitários e integração** | `npm test` | `academicMetrics.test.js`, `apiClient.test.js`, `servicesIntegration.test.js`, `httpContractIntegration.test.js`, `devops.test.js` e `realBackendE2E.test.js` (executado contra Spring Boot real no workflow `fullstack-e2e.yml`). | **22/22 locais aprovados** + **E2E Real verde em CI** |
+| **Observabilidade e Auditoria** | `GET /actuator/metrics`, `GET /api/v1/auditoria` | `RequestLoggingFilter` (SLF4J estruturado sem vazar credenciais) e trilha de auditoria LGPD paginada para docentes. | **Validado via MockMvc e E2E** |
 | **Análise estática (Lint)** | `npm run lint` | Regras ESLint (`recommended`, `react-hooks`, `react-refresh`) em todos os arquivos `.js`/`.jsx`. | **0 erros e 0 warnings** |
 | **Build de produção** | `npm run build` | Transformação e empacotamento Vite + Tailwind CSS 4 de todos os módulos e chunks lazy. | **61 módulos compilados com sucesso** |

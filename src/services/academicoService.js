@@ -23,3 +23,10 @@ export function listAlunosByTurma(turmaId, query, signal) {
 export function listAlunos(query, signal) {
   return request('/alunos', { query, signal })
 }
+
+export function updateMatriculaStatus(matriculaId, acao) {
+  return request(`/matriculas/${matriculaId}/status`, {
+    method: 'PATCH',
+    body: { acao },
+  })
+}
