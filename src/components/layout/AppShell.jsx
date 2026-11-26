@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import menuIcon from '../../assets/menu-aberto.png'
 import visaoIcon from '../../assets/visaogeral.png'
@@ -8,7 +8,8 @@ import frequenciaIcon from '../../assets/frequencia.png'
 import aprenderIcon from '../../assets/aprender.png'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useAcademic } from '../../contexts/AcademicContext.jsx'
-import { getApiMode } from '../../services/apiClient.js'
+import { getApiBaseUrl, getApiMode, setRuntimeTransport } from '../../services/apiClient.js'
+import { checkApiHealth } from '../../services/healthService.js'
 
 const NAV_ITEMS = [
   { to: '/professor/cursos', label: 'Cursos', icone: aprenderIcon },
@@ -22,6 +23,12 @@ const NAV_ITEMS = [
 
 export default function AppShell({ children, showContextBar = true }) {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [apiMode, setApiMode] = useState(() => getApiMode())
+  const [health, setHealth] = useState(() => ({
+    status: getApiMode() === 'mock' ? 'UP' : 'CHECKING',
+    mode: getApiMode(),
+    latencyMs: null,
+  }))
   const { usuario, logout } = useAuth()
   const {
     cursos,
@@ -36,7 +43,34 @@ export default function AppShell({ children, showContextBar = true }) {
   } = useAcademic()
   const navigate = useNavigate()
   const location = useLocation()
-  const apiMode = getApiMode()
+  const hasHttpBase = Boolean(getApiBaseUrl())
+
+  const refreshHealth = useCallback(async (signal) => {
+    try {
+      const result = await checkApiHealth({ signal })
+      setHealth(result)
+      setApiMode(result.mode)
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        setHealth({ status: 'DOWN', mode: getApiMode(), latencyMs: null })
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    checkApiHealth({ signal: controller.signal })
+      .then((result) => {
+        setHealth(result)
+        setApiMode(result.mode)
+      })
+      .catch((err) => {
+        if (err?.name !== 'AbortError') {
+          setHealth({ status: 'DOWN', mode: getApiMode(), latencyMs: null })
+        }
+      })
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -52,6 +86,35 @@ export default function AppShell({ children, showContextBar = true }) {
     await logout()
     navigate('/login', { replace: true })
   }
+
+  async function handleToggleTransport() {
+    if (!hasHttpBase) {
+      await refreshHealth()
+      return
+    }
+    const nextMode = apiMode === 'http' ? 'mock' : 'http'
+    setRuntimeTransport(nextMode)
+    setApiMode(nextMode)
+    await refreshHealth()
+  }
+
+  const badgeTone =
+    apiMode === 'mock'
+      ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+      : health.status === 'UP'
+        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+        : health.status === 'CHECKING'
+          ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+          : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+
+  const badgeLabel =
+    apiMode === 'mock'
+      ? 'Mock /api/v1'
+      : health.status === 'UP'
+        ? `API HTTP · UP${health.latencyMs ? ` (${health.latencyMs}ms)` : ''}`
+        : health.status === 'CHECKING'
+          ? 'API HTTP · Verificando'
+          : 'API HTTP · DOWN'
 
   const iniciais = (usuario?.nomeCompleto || 'ED')
     .split(' ')
@@ -94,16 +157,19 @@ export default function AppShell({ children, showContextBar = true }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <span
-            className={`hidden rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline-flex ${
-              apiMode === 'http'
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-blue-50 text-blue-700'
-            }`}
-            title="Modo de comunicação com a API /api/v1"
+          <button
+            type="button"
+            onClick={handleToggleTransport}
+            aria-label="Verificar ou alternar transporte da API"
+            title={
+              hasHttpBase
+                ? 'Clique para alternar entre HTTP real e Mock /api/v1'
+                : 'Clique para verificar status do adaptador /api/v1'
+            }
+            className={`hidden rounded-full px-2.5 py-1 text-[11px] font-semibold transition sm:inline-flex ${badgeTone}`}
           >
-            {apiMode === 'http' ? 'API HTTP' : 'Mock /api/v1'}
-          </span>
+            {badgeLabel}
+          </button>
           <button
             type="button"
             onClick={handleLogout}
