@@ -11,7 +11,9 @@ import java.time.LocalDate;
 public class Avaliacao {
 
     public enum Status {
+        PLANEJADA,
         ABERTA,
+        APLICADA,
         CORRIGIDA,
         CANCELADA
     }
@@ -23,8 +25,20 @@ public class Avaliacao {
     @Column(name = "disciplina_turma_id", nullable = false)
     private Long disciplinaTurmaId;
 
+    @Column(name = "professor_id", nullable = false)
+    private Long professorId = 1L;
+
+    @Column(name = "periodo_id", nullable = false)
+    private Long periodoId = 1L;
+
     @Column(name = "nome_avaliacao", nullable = false, length = 150)
     private String nomeAvaliacao;
+
+    @Column(name = "tipo_avaliacao", nullable = false, length = 30)
+    private String tipoAvaliacao = "PROVA";
+
+    @Column(length = 1000)
+    private String descricao;
 
     @Column(name = "data_avaliacao", nullable = false)
     private LocalDate dataAvaliacao;
@@ -49,6 +63,21 @@ public class Avaliacao {
         BigDecimal valorTotal,
         BigDecimal peso
     ) {
+        this(disciplinaTurmaId, 1L, 1L, nomeAvaliacao, "PROVA", "", dataAvaliacao, valorTotal, peso, Status.ABERTA);
+    }
+
+    public Avaliacao(
+        Long disciplinaTurmaId,
+        Long professorId,
+        Long periodoId,
+        String nomeAvaliacao,
+        String tipoAvaliacao,
+        String descricao,
+        LocalDate dataAvaliacao,
+        BigDecimal valorTotal,
+        BigDecimal peso,
+        Status status
+    ) {
         if (nomeAvaliacao == null || nomeAvaliacao.trim().isEmpty()) {
             throw new DomainRuleException("Nome obrigatório", "A avaliação deve possuir um nome.");
         }
@@ -59,11 +88,42 @@ public class Avaliacao {
             throw new DomainRuleException("Peso inválido", "O peso da avaliação deve ser positivo.");
         }
         this.disciplinaTurmaId = disciplinaTurmaId;
+        this.professorId = professorId != null ? professorId : 1L;
+        this.periodoId = periodoId != null ? periodoId : 1L;
         this.nomeAvaliacao = nomeAvaliacao.trim();
+        this.tipoAvaliacao = tipoAvaliacao != null && !tipoAvaliacao.isBlank() ? tipoAvaliacao.trim().toUpperCase() : "PROVA";
+        this.descricao = descricao != null ? descricao : "";
         this.dataAvaliacao = dataAvaliacao;
         this.valorTotal = valorTotal;
         this.peso = peso;
-        this.status = Status.ABERTA;
+        this.status = status != null ? status : Status.ABERTA;
+    }
+
+    public void atualizar(
+        String nomeAvaliacao,
+        String tipoAvaliacao,
+        String descricao,
+        LocalDate dataAvaliacao,
+        BigDecimal valorTotal,
+        BigDecimal peso,
+        Status novoStatus
+    ) {
+        BigDecimal vt = valorTotal != null ? valorTotal : this.valorTotal;
+        BigDecimal ps = peso != null ? peso : this.peso;
+        if (vt.compareTo(BigDecimal.ZERO) <= 0 || ps.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new DomainRuleException("Valores inválidos", "Valor total e peso devem ser maiores que zero.");
+        }
+        if (nomeAvaliacao != null && !nomeAvaliacao.trim().isEmpty()) {
+            this.nomeAvaliacao = nomeAvaliacao.trim();
+        }
+        if (tipoAvaliacao != null && !tipoAvaliacao.isBlank()) {
+            this.tipoAvaliacao = tipoAvaliacao.trim().toUpperCase();
+        }
+        if (descricao != null) this.descricao = descricao;
+        if (dataAvaliacao != null) this.dataAvaliacao = dataAvaliacao;
+        this.valorTotal = vt;
+        this.peso = ps;
+        if (novoStatus != null) this.status = novoStatus;
     }
 
     public void corrigir() {
@@ -100,8 +160,24 @@ public class Avaliacao {
         return disciplinaTurmaId;
     }
 
+    public Long getProfessorId() {
+        return professorId;
+    }
+
+    public Long getPeriodoId() {
+        return periodoId;
+    }
+
     public String getNomeAvaliacao() {
         return nomeAvaliacao;
+    }
+
+    public String getTipoAvaliacao() {
+        return tipoAvaliacao;
+    }
+
+    public String getDescricao() {
+        return descricao;
     }
 
     public LocalDate getDataAvaliacao() {

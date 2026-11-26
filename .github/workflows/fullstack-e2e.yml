@@ -1,0 +1,73 @@
+name: Full-Stack E2E Integration
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: fullstack-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fullstack-e2e:
+    name: React Services ↔ Spring Boot Real (/api/v1)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Package Spring Boot JAR
+        working-directory: backend_spring
+        run: |
+          chmod +x gradlew
+          ./gradlew bootJar --no-daemon
+
+      - name: Start Spring Boot API and run Full-Stack E2E suite
+        run: |
+          JAR_FILE=$(ls backend_spring/build/libs/*-SNAPSHOT.jar | head -n 1)
+          echo "Starting $JAR_FILE"
+          nohup java -jar "$JAR_FILE" --server.port=8080 > backend_e2e.log 2>&1 &
+          BACKEND_PID=$!
+          trap 'kill $BACKEND_PID 2>/dev/null || true' EXIT
+
+          READY=0
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8080/actuator/health | grep -q '"UP"'; then
+              READY=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$READY" -ne 1 ]; then
+            echo "Spring Boot failed to become healthy:"
+            cat backend_e2e.log
+            exit 1
+          fi
+
+          if ! EDULYTICS_E2E_BACKEND_URL=http://127.0.0.1:8080 npm run test:e2e:backend; then
+            echo "--- Spring Boot Logs ---"
+            tail -n 120 backend_e2e.log
+            exit 1
+          fi

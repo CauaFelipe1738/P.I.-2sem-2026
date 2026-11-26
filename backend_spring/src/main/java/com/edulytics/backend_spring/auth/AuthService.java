@@ -1,5 +1,6 @@
 package com.edulytics.backend_spring.auth;
 
+import com.edulytics.backend_spring.auditoria.AuditoriaService;
 import com.edulytics.backend_spring.auth.dto.LoginRequest;
 import com.edulytics.backend_spring.auth.dto.LoginResponse;
 import com.edulytics.backend_spring.auth.dto.UsuarioResumoDTO;
@@ -21,15 +22,18 @@ public class AuthService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuditoriaService auditoriaService;
 
     public AuthService(
         UsuarioRepository usuarioRepository,
         PasswordEncoder passwordEncoder,
-        JwtService jwtService
+        JwtService jwtService,
+        AuditoriaService auditoriaService
     ) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.auditoriaService = auditoriaService;
     }
 
     @Transactional
@@ -48,12 +52,15 @@ public class AuthService {
         usuario.registrarAcesso(Instant.now());
         usuarioRepository.save(usuario);
 
+        UsuarioResumoDTO resumo = toResumo(usuario);
+        auditoriaService.registrarComUsuario(usuario.getId(), "usuario", "LOGIN", null, resumo);
+
         String token = jwtService.generateToken(usuario);
         return new LoginResponse(
             token,
             "Bearer",
             jwtService.getExpirationSeconds(),
-            toResumo(usuario)
+            resumo
         );
     }
 
