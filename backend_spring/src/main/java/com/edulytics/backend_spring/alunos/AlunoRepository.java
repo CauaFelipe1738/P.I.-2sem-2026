@@ -1,11 +1,13 @@
 package com.edulytics.backend_spring.alunos;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-
-interface AlunoRepository extends CrudRepository<Aluno, Long>, PagingAndSortingRepository<Aluno, Long> {
-  
+public interface AlunoRepository extends JpaRepository<Aluno, Long> {
+    Page<Aluno> findByNomeCompletoContainingIgnoreCaseOrMatriculaContainingIgnoreCase(
+        String nomeCompleto,
+        String matricula,
+        Pageable pageable
+    );
 }
