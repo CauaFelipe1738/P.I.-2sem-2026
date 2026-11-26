@@ -38,6 +38,7 @@ export default function DesempenhoPage() {
 
   const alunos = Array.isArray(alunosQuery.data) ? alunosQuery.data : []
   const ind = indicadoresQuery.data
+  const totalComentarios = Math.max(1, ind?.totalComentarios || 0)
 
   return (
     <div className="space-y-5">
@@ -99,13 +100,29 @@ export default function DesempenhoPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="rounded-xl border border-[#d9e1eb] bg-white p-5 shadow-xs">
             <h2 className="text-sm font-bold text-[#10213a]">Observações pedagógicas por categoria</h2>
-            <div className="mt-4 space-y-2.5">
+            <p className="mt-1 text-xs text-slate-500">
+              Proporção em relação ao total de registros ({ind.totalComentarios ?? 0}).
+            </p>
+            <div className="mt-4 space-y-3">
               {TIPOS_COMENTARIO.map(({ value, label }) => {
                 const count = ind.comentariosPorTipo?.[value] || 0
+                const pct = ind.totalComentarios ? Math.round((count * 100) / totalComentarios) : 0
                 return (
-                  <div key={value} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs">
-                    <span className="font-medium text-slate-700">{label}</span>
-                    <strong className="text-slate-900">{count}</strong>
+                  <div key={value} className="space-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-slate-700">{label}</span>
+                      <strong className="text-slate-900">{count} ({pct}%)</strong>
+                    </div>
+                    <div
+                      role="progressbar"
+                      aria-label={`Observações em ${label}`}
+                      aria-valuenow={pct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      className="h-2 overflow-hidden rounded-full bg-slate-200"
+                    >
+                      <div className="h-full rounded-full bg-[#2875df]" style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
                 )
               })}
@@ -124,27 +141,43 @@ export default function DesempenhoPage() {
               </div>
             ) : (
               <div className="mt-3 space-y-2">
-                {ind.alertas.map((alerta) => (
-                  <article
-                    key={alerta.alunoId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white p-3"
-                  >
-                    <div>
-                      <strong className="text-sm text-slate-900">{alerta.alunoNome}</strong>
-                      <p className="text-xs text-slate-600">
-                        Frequência: {formatarPercentual(alerta.taxaFrequencia)} ·{' '}
-                        {alerta.dificuldadesRegistradas} ocorrência(s) de atenção
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAlunoId(String(alerta.alunoId))}
-                      className="text-xs font-semibold text-[#1767d2] hover:underline"
-                    >
-                      Filtrar aluno
-                    </button>
-                  </article>
-                ))}
+                {ind.alertas.map((alerta) => {
+                  const taxaVal = typeof alerta.taxaFrequencia === 'number' ? alerta.taxaFrequencia : 0
+                  const abaixoCorte = typeof alerta.taxaFrequencia === 'number' && alerta.taxaFrequencia < CORTE_PRESENCA_PERCENTUAL
+                  return (
+                    <article key={alerta.alunoId} className="space-y-2 rounded-lg bg-white p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <strong className="text-sm text-slate-900">{alerta.alunoNome}</strong>
+                          <p className="text-xs text-slate-600">
+                            Frequência: {formatarPercentual(alerta.taxaFrequencia)} ·{' '}
+                            {alerta.dificuldadesRegistradas} ocorrência(s) de atenção
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAlunoId(String(alerta.alunoId))}
+                          className="text-xs font-semibold text-[#1767d2] hover:underline"
+                        >
+                          Filtrar aluno
+                        </button>
+                      </div>
+                      <div
+                        role="progressbar"
+                        aria-label={`Frequência de ${alerta.alunoNome} frente ao corte de ${CORTE_PRESENCA_PERCENTUAL}%`}
+                        aria-valuenow={taxaVal}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        className="h-2 overflow-hidden rounded-full bg-slate-100"
+                      >
+                        <div
+                          className={`h-full rounded-full ${abaixoCorte ? 'bg-rose-500' : 'bg-amber-500'}`}
+                          style={{ width: `${Math.min(100, taxaVal)}%` }}
+                        />
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             )}
           </section>

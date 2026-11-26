@@ -20,6 +20,7 @@ export default function AvaliacoesPage() {
     descricao: '',
   })
   const [notasOverrides, setNotasOverrides] = useState({})
+  const [editingAvaliacaoId, setEditingAvaliacaoId] = useState(null)
   const [salvandoAv, setSalvandoAv] = useState(false)
   const [salvandoNotaId, setSalvandoNotaId] = useState(null)
   const [mensagem, setMensagem] = useState('')
@@ -77,27 +78,65 @@ export default function AvaliacoesPage() {
 
   const avSelecionada = avaliacoes.find((a) => a.id === avaliacaoId)
 
+  function editarAvaliacao(av) {
+    setEditingAvaliacaoId(av.id)
+    setFormAv({
+      nomeAvaliacao: av.nomeAvaliacao || '',
+      tipoAvaliacao: av.tipoAvaliacao || 'PROVA',
+      dataAvaliacao: av.dataAvaliacao || new Date().toISOString().slice(0, 10),
+      valorTotal: String(av.valorTotal ?? 10),
+      peso: String(av.peso ?? 1),
+      descricao: av.descricao || '',
+    })
+  }
+
+  function cancelarEdicaoAvaliacao() {
+    setEditingAvaliacaoId(null)
+    setFormAv({
+      nomeAvaliacao: '',
+      tipoAvaliacao: 'PROVA',
+      dataAvaliacao: new Date().toISOString().slice(0, 10),
+      valorTotal: '10',
+      peso: '1',
+      descricao: '',
+    })
+  }
+
   async function criarAvaliacao(event) {
     event.preventDefault()
     setErro(null)
     setMensagem('')
     setSalvandoAv(true)
     try {
-      const criada = await avaliacoesService.createAvaliacao({
-        disciplinaTurmaId,
-        periodoId: periodoId || periodos[0]?.id || 1,
-        nomeAvaliacao: formAv.nomeAvaliacao,
-        tipoAvaliacao: formAv.tipoAvaliacao,
-        dataAvaliacao: formAv.dataAvaliacao,
-        valorTotal: Number(formAv.valorTotal),
-        peso: Number(formAv.peso),
-        descricao: formAv.descricao,
-        status: 'PLANEJADA',
-      })
-      setFormAv((prev) => ({ ...prev, nomeAvaliacao: '', descricao: '' }))
-      setMensagem('Avaliação criada com sucesso.')
-      await avaliacoesQuery.refetch()
-      setAvaliacaoId(criada.id)
+      if (editingAvaliacaoId) {
+        await avaliacoesService.updateAvaliacao(editingAvaliacaoId, {
+          nomeAvaliacao: formAv.nomeAvaliacao,
+          tipoAvaliacao: formAv.tipoAvaliacao,
+          dataAvaliacao: formAv.dataAvaliacao,
+          valorTotal: Number(formAv.valorTotal),
+          peso: Number(formAv.peso),
+          descricao: formAv.descricao,
+        })
+        setMensagem('Avaliação atualizada com sucesso.')
+        cancelarEdicaoAvaliacao()
+        await avaliacoesQuery.refetch()
+      } else {
+        const criada = await avaliacoesService.createAvaliacao({
+          disciplinaTurmaId,
+          periodoId: periodoId || periodos[0]?.id || 1,
+          nomeAvaliacao: formAv.nomeAvaliacao,
+          tipoAvaliacao: formAv.tipoAvaliacao,
+          dataAvaliacao: formAv.dataAvaliacao,
+          valorTotal: Number(formAv.valorTotal),
+          peso: Number(formAv.peso),
+          descricao: formAv.descricao,
+          status: 'PLANEJADA',
+        })
+        setFormAv((prev) => ({ ...prev, nomeAvaliacao: '', descricao: '' }))
+        setMensagem('Avaliação criada com sucesso.')
+        await avaliacoesQuery.refetch()
+        setAvaliacaoId(criada.id)
+      }
     } catch (error) {
       setErro(error)
     } finally {
@@ -179,7 +218,20 @@ export default function AvaliacoesPage() {
       <div className="grid gap-5 lg:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="space-y-4">
           <form onSubmit={criarAvaliacao} className="space-y-3 rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-xs">
-            <h2 className="text-sm font-bold text-[#10213a]">Nova avaliação</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-[#10213a]">
+                {editingAvaliacaoId ? 'Editar avaliação' : 'Nova avaliação'}
+              </h2>
+              {editingAvaliacaoId && (
+                <button
+                  type="button"
+                  onClick={cancelarEdicaoAvaliacao}
+                  className="text-xs font-semibold text-slate-500 hover:underline"
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
             <label className="block text-xs font-semibold">
               Nome da avaliação
               <input
@@ -251,7 +303,7 @@ export default function AvaliacoesPage() {
               disabled={salvandoAv || !disciplinaTurmaId}
               className="w-full rounded-lg bg-[#2875df] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1e65c2] disabled:opacity-50"
             >
-              {salvandoAv ? 'Salvando...' : 'Criar avaliação'}
+              {salvandoAv ? 'Salvando...' : editingAvaliacaoId ? 'Salvar alterações' : 'Criar avaliação'}
             </button>
           </form>
 
@@ -279,15 +331,24 @@ export default function AvaliacoesPage() {
                       </button>
                       <StatusBadge value={av.status} />
                     </div>
-                    {av.status !== 'CORRIGIDA' && av.status !== 'CANCELADA' && (
+                    <div className="mt-2 flex flex-wrap gap-3 text-[11px]">
                       <button
                         type="button"
-                        onClick={() => marcarCorrigida(av.id)}
-                        className="mt-2 text-[11px] font-semibold text-[#1767d2] hover:underline"
+                        onClick={() => editarAvaliacao(av)}
+                        className="font-semibold text-slate-600 hover:underline"
                       >
-                        Marcar como corrigida
+                        Editar
                       </button>
-                    )}
+                      {av.status !== 'CORRIGIDA' && av.status !== 'CANCELADA' && (
+                        <button
+                          type="button"
+                          onClick={() => marcarCorrigida(av.id)}
+                          className="font-semibold text-[#1767d2] hover:underline"
+                        >
+                          Marcar como corrigida
+                        </button>
+                      )}
+                    </div>
                   </article>
                 ))}
               </div>

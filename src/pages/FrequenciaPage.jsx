@@ -26,8 +26,10 @@ export default function FrequenciaPage() {
     status: 'REALIZADA',
   })
   const [chamadaOverrides, setChamadaOverrides] = useState({})
+  const [editingAulaId, setEditingAulaId] = useState(null)
   const [salvandoAula, setSalvandoAula] = useState(false)
   const [salvandoChamada, setSalvandoChamada] = useState(false)
+  const [salvandoIndividualId, setSalvandoIndividualId] = useState(null)
   const [mensagem, setMensagem] = useState('')
   const [erroForm, setErroForm] = useState(null)
 
@@ -85,24 +87,75 @@ export default function FrequenciaPage() {
     return map
   }, [alunos, frequencias, aulaSelecionadaId, chamadaOverrides])
 
+  function editarAulaSelecionada(aula) {
+    setEditingAulaId(aula.id)
+    setNovaAula({
+      dataAula: aula.dataAula,
+      horarioInicio: String(aula.horarioInicio || '').slice(0, 5),
+      horarioFim: String(aula.horarioFim || '').slice(0, 5),
+      conteudo: aula.conteudo || '',
+      status: aula.status || 'REALIZADA',
+    })
+  }
+
+  function cancelarEdicaoAula() {
+    setEditingAulaId(null)
+    setNovaAula({
+      dataAula: new Date().toISOString().slice(0, 10),
+      horarioInicio: '19:00',
+      horarioFim: '20:40',
+      conteudo: '',
+      status: 'REALIZADA',
+    })
+  }
+
   async function criarAula(event) {
     event.preventDefault()
     setErroForm(null)
     setMensagem('')
     setSalvandoAula(true)
     try {
-      const criada = await aulasService.createAula({
-        disciplinaTurmaId,
-        ...novaAula,
-      })
-      setNovaAula((prev) => ({ ...prev, conteudo: '' }))
-      setMensagem('Aula registrada com sucesso.')
-      await aulasQuery.refetch()
-      setAulaSelecionadaId(criada.id)
+      if (editingAulaId) {
+        await aulasService.updateAula(editingAulaId, novaAula)
+        setMensagem('Aula atualizada com sucesso.')
+        cancelarEdicaoAula()
+        await aulasQuery.refetch()
+      } else {
+        const criada = await aulasService.createAula({
+          disciplinaTurmaId,
+          ...novaAula,
+        })
+        setNovaAula((prev) => ({ ...prev, conteudo: '' }))
+        setMensagem('Aula registrada com sucesso.')
+        await aulasQuery.refetch()
+        setAulaSelecionadaId(criada.id)
+      }
     } catch (error) {
       setErroForm(error)
     } finally {
       setSalvandoAula(false)
+    }
+  }
+
+  async function salvarIndividual(alunoId) {
+    const row = rascunhoChamada[alunoId]
+    if (!row?.id) return
+    setErroForm(null)
+    setMensagem('')
+    setSalvandoIndividualId(alunoId)
+    try {
+      await aulasService.updateFrequencia(row.id, {
+        statusPresenca: row.statusPresenca,
+        justificativa: row.justificativa,
+        checklistAula: row.checklistAula,
+        observacao: row.observacao,
+      })
+      setMensagem('Registro individual atualizado via PUT /frequencias.')
+      frequenciasQuery.refetch()
+    } catch (error) {
+      setErroForm(error)
+    } finally {
+      setSalvandoIndividualId(null)
     }
   }
 
@@ -267,17 +320,29 @@ export default function FrequenciaPage() {
                         />
                       </div>
 
-                      <div className="mt-2 grid gap-1 sm:grid-cols-2">
-                        {CHECKLIST_AULA.map((item) => (
-                          <label key={item} className="flex items-center gap-2 text-[11px] text-slate-600">
-                            <input
-                              type="checkbox"
-                              checked={row.checklistAula.includes(item)}
-                              onChange={() => toggleChecklist(aluno.alunoId, item)}
-                            />
-                            {item}
-                          </label>
-                        ))}
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                        <div className="grid flex-1 gap-1 sm:grid-cols-2">
+                          {CHECKLIST_AULA.map((item) => (
+                            <label key={item} className="flex items-center gap-2 text-[11px] text-slate-600">
+                              <input
+                                type="checkbox"
+                                checked={row.checklistAula.includes(item)}
+                                onChange={() => toggleChecklist(aluno.alunoId, item)}
+                              />
+                              {item}
+                            </label>
+                          ))}
+                        </div>
+                        {row.id && (
+                          <button
+                            type="button"
+                            disabled={salvandoIndividualId === aluno.alunoId}
+                            onClick={() => salvarIndividual(aluno.alunoId)}
+                            className="rounded border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                          >
+                            {salvandoIndividualId === aluno.alunoId ? 'Atualizando...' : 'Atualizar aluno'}
+                          </button>
+                        )}
                       </div>
                     </article>
                   )
@@ -297,7 +362,20 @@ export default function FrequenciaPage() {
 
         <aside className="space-y-5">
           <form onSubmit={criarAula} className="space-y-3 rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-xs">
-            <h3 className="text-sm font-bold text-[#10213a]">Nova aula</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#10213a]">
+                {editingAulaId ? 'Editar aula' : 'Nova aula'}
+              </h3>
+              {editingAulaId && (
+                <button
+                  type="button"
+                  onClick={cancelarEdicaoAula}
+                  className="text-xs font-semibold text-slate-500 hover:underline"
+                >
+                  Cancelar edição
+                </button>
+              )}
+            </div>
             <div className="grid gap-2.5 sm:grid-cols-2">
               <label className="text-xs font-semibold sm:col-span-2">
                 Data
@@ -345,7 +423,11 @@ export default function FrequenciaPage() {
               disabled={salvandoAula || !disciplinaTurmaId}
               className="w-full rounded-lg bg-[#2875df] px-3 py-2 text-xs font-semibold text-white hover:bg-[#1e65c2] disabled:opacity-50"
             >
-              {salvandoAula ? 'Criando aula...' : 'Registrar aula'}
+              {salvandoAula
+                ? 'Salvando...'
+                : editingAulaId
+                  ? 'Salvar alterações da aula'
+                  : 'Registrar aula'}
             </button>
           </form>
 
@@ -379,7 +461,14 @@ export default function FrequenciaPage() {
                       </button>
                       <StatusBadge value={aula.status} />
                     </div>
-                    <div className="mt-2 flex gap-2 text-[11px]">
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => editarAulaSelecionada(aula)}
+                        className="font-semibold text-[#1767d2] hover:underline"
+                      >
+                        Editar
+                      </button>
                       {aula.status === 'PLANEJADA' && (
                         <>
                           <button

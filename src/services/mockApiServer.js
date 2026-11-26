@@ -496,8 +496,8 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
   if (method === 'GET' && (match = cleanPath.match(/^\/turmas\/(\d+)\/alunos$/))) {
     requireProfessor(user)
     const turmaId = Number(match[1])
-    const status = query.status || 'ATIVA'
-    const mats = db.matriculas.filter((m) => m.turmaId === turmaId && m.status === status)
+    const status = String(query.status || 'ATIVA').toUpperCase()
+    const mats = db.matriculas.filter((m) => m.turmaId === turmaId && (status === 'TODOS' || m.status === status))
     return mats.map((m) => {
       const a = db.alunos.find((item) => item.id === m.alunoId)
       return {
@@ -508,6 +508,35 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
         statusMatricula: m.status,
       }
     })
+  }
+
+  if (method === 'PATCH' && (match = cleanPath.match(/^\/matriculas\/(\d+)\/status$/))) {
+    requireProfessor(user)
+    const id = Number(match[1])
+    const mat = db.matriculas.find((m) => m.id === id)
+    if (!mat) throw problem(404, 'Matrícula não encontrada', `Matrícula ${id} não existe.`)
+    const acao = String(body?.acao || '').trim().toUpperCase()
+    if (acao === 'CONCLUIR') {
+      if (mat.status === 'CANCELADA' || mat.status === 'TRANCADA') {
+        throw problem(422, 'Transição inválida', `Matrícula ${mat.status} não pode ser concluída.`)
+      }
+      mat.status = 'CONCLUIDA'
+    } else if (acao === 'CANCELAR') {
+      if (mat.status === 'CONCLUIDA') {
+        throw problem(422, 'Transição inválida', 'Matrícula concluída não pode ser cancelada.')
+      }
+      mat.status = 'CANCELADA'
+      mat.dataDesligamento = new Date().toISOString().slice(0, 10)
+    } else if (acao === 'TRANCAR') {
+      if (mat.status === 'CANCELADA' || mat.status === 'CONCLUIDA') {
+        throw problem(422, 'Transição inválida', `Matrícula ${mat.status} não pode ser trancada.`)
+      }
+      mat.status = 'TRANCADA'
+    } else {
+      throw problem(422, 'Ação inválida', 'Informe CONCLUIR, CANCELAR ou TRANCAR.')
+    }
+    saveDb()
+    return mat
   }
 
   if (method === 'GET' && cleanPath === '/alunos') {
@@ -1067,6 +1096,8 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
         }
       })
 
+    const disciplinaTurmaFilter = query.disciplinaTurmaId ? Number(query.disciplinaTurmaId) : null
+
     const frequencias = db.frequencias
       .filter((f) => f.alunoId === user.alunoId)
       .map((f) => {
@@ -1074,11 +1105,13 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
         const dt = aula ? enrichDisciplinaTurma(db.disciplinasTurma.find((d) => d.id === aula.disciplinaTurmaId)) : null
         return {
           ...f,
+          disciplinaTurmaId: aula?.disciplinaTurmaId || null,
           dataAula: aula?.dataAula || '',
           conteudo: aula?.conteudo || '',
           disciplinaNome: dt?.disciplina?.nome || '',
         }
       })
+      .filter((f) => !disciplinaTurmaFilter || f.disciplinaTurmaId === disciplinaTurmaFilter)
 
     const notas = db.alunoAvaliacoes
       .filter((n) => n.alunoId === user.alunoId)
@@ -1087,6 +1120,7 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
         const dt = av ? enrichDisciplinaTurma(db.disciplinasTurma.find((d) => d.id === av.disciplinaTurmaId)) : null
         return {
           ...n,
+          disciplinaTurmaId: av?.disciplinaTurmaId || null,
           avaliacaoNome: av?.nomeAvaliacao || '',
           tipoAvaliacao: av?.tipoAvaliacao || '',
           dataAvaliacao: av?.dataAvaliacao || '',
@@ -1095,9 +1129,15 @@ export async function handleMockRequest({ method = 'GET', path, query = {}, body
           disciplinaNome: dt?.disciplina?.nome || '',
         }
       })
+      .filter((n) => !disciplinaTurmaFilter || n.disciplinaTurmaId === disciplinaTurmaFilter)
 
     const comentariosVisiveis = db.comentarios
-      .filter((c) => c.alunoId === user.alunoId && c.visivelAluno === true)
+      .filter(
+        (c) =>
+          c.alunoId === user.alunoId &&
+          c.visivelAluno === true &&
+          (!disciplinaTurmaFilter || c.disciplinaTurmaId === null || c.disciplinaTurmaId === disciplinaTurmaFilter),
+      )
       .map((c) => ({
         ...c,
         professorNome: db.professores.find((p) => p.id === c.professorId)?.nomeCompleto || '',

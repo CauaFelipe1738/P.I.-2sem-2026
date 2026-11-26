@@ -34,6 +34,7 @@ public final class IndicadoresDTOs {
     public record FrequenciaRelatorioDTO(
         Long id,
         Long aulaId,
+        Long disciplinaTurmaId,
         Long alunoId,
         String alunoNome,
         String statusPresenca,
@@ -48,6 +49,7 @@ public final class IndicadoresDTOs {
     public record NotaRelatorioDTO(
         Long id,
         Long avaliacaoId,
+        Long disciplinaTurmaId,
         Long alunoId,
         String alunoNome,
         String avaliacaoNome,

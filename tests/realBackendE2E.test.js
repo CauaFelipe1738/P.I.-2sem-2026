@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test, { after, before } from 'node:test'
-import { setRuntimeTransport, setStoredToken } from '../src/services/apiClient.js'
+import { request, setRuntimeTransport, setStoredToken } from '../src/services/apiClient.js'
 import { checkApiHealth } from '../src/services/healthService.js'
 import * as authService from '../src/services/authService.js'
 import * as academicoService from '../src/services/academicoService.js'
@@ -92,6 +92,9 @@ test('E2E Full-Stack: serviços React comunicam em HTTP real contra Spring Boot 
   const realizada = await aulasService.realizarAula(aula.id, 'Integração E2E concluída')
   assert.equal(realizada.status, 'REALIZADA')
 
+  const aulaAtualizada = await aulasService.updateAula(aula.id, { conteudo: 'Integração E2E editada' })
+  assert.equal(aulaAtualizada.conteudo, 'Integração E2E editada')
+
   await assert.rejects(
     () =>
       aulasService.saveFrequenciasEmLote(aula.id, [
@@ -107,6 +110,12 @@ test('E2E Full-Stack: serviços React comunicam em HTTP real contra Spring Boot 
   assert.equal(freqs.length, 1)
   assert.equal(freqs[0].presente, true)
 
+  const freqAtualizada = await aulasService.updateFrequencia(freqs[0].id, {
+    statusPresenca: 'PRESENTE',
+    observacao: 'Atualizado via E2E',
+  })
+  assert.equal(freqAtualizada.statusPresenca, 'PRESENTE')
+
   // 5. Avaliações e Notas real
   const av = await avaliacoesService.createAvaliacao({
     disciplinaTurmaId,
@@ -118,6 +127,9 @@ test('E2E Full-Stack: serviços React comunicam em HTTP real contra Spring Boot 
     peso: 2,
   })
   assert.ok(av.id)
+
+  const avAtualizada = await avaliacoesService.updateAvaliacao(av.id, { nomeAvaliacao: 'Avaliação E2E Atualizada' })
+  assert.equal(avAtualizada.nomeAvaliacao, 'Avaliação E2E Atualizada')
 
   await assert.rejects(
     () => avaliacoesService.upsertNotaAluno(av.id, carlaId, { nota: 12 }),
@@ -132,6 +144,19 @@ test('E2E Full-Stack: serviços React comunicam em HTTP real contra Spring Boot 
 
   const corrigida = await avaliacoesService.corrigirAvaliacao(av.id)
   assert.equal(corrigida.status, 'CORRIGIDA')
+
+  // 5b. Filtros de alunos, Matrícula (turma 2) e Auditoria LGPD
+  const alunosFiltrados = await academicoService.listAlunos({ turmaId })
+  assert.ok(alunosFiltrados.totalElements >= 3)
+
+  const alunosT2 = await academicoService.listAlunosByTurma(2, { status: 'TODOS' })
+  if (alunosT2.length > 0) {
+    const trancada = await academicoService.updateMatriculaStatus(alunosT2[0].matriculaId, 'TRANCAR')
+    assert.equal(trancada.status, 'TRANCADA')
+  }
+
+  const auditoria = await request('/auditoria', { query: { page: 0, size: 10 } })
+  assert.ok(auditoria.totalElements >= 1)
 
   // 6. Comentários LGPD e Planos real
   const privadoTitulo = 'Nota privada E2E Spring'

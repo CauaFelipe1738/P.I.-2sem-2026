@@ -167,8 +167,10 @@ erDiagram
 
 ---
 
-## 8. Limitações Conhecidas e Evolução
+## 8. Status da Entrega v1 e Próximas Etapas
 
-- O backend Spring Boot em `backend_spring/` implementa todos os módulos principais de `/api/v1` (autenticação JWT, catálogo acadêmico, matrículas, aulas, frequência com 4 status/checklist, avaliações/notas, comentários LGPD, planos de acompanhamento, indicadores com corte de 75%, relatórios e `/me/desempenho`) versionados via Flyway (`V1`–`V2`), além de o frontend manter o adaptador `Mock /api/v1` para demonstração offline sem servidor.
-- A recuperação de senha exibe orientação para contato institucional até que um serviço SMTP/SES seja integrado ao backend.
-- A hospedagem inicial no Amazon S3 (`docs/frontend-s3.md`) opera via HTTP devido às restrições de laboratório AWS Academy; para produção, recomenda-se alinhamento HTTPS entre frontend e API na EC2.
+- **Frontend, Backend Spring Boot (`/api/v1`) e Integração**: todos os módulos acadêmicos da v1 (autenticação JWT stateless, catálogo e gestão de matrículas, aulas e frequência com 4 status/checklist, avaliações e notas, comentários com privacidade LGPD `visivelAluno`, planos de acompanhamento, indicadores com corte de **75%**, relatórios CSV/PDF, Painel do Aluno e observabilidade via SLF4J + `/actuator/metrics` + `/api/v1/auditoria`) estão implementados, containerizados e validados pelas 3 esteiras CI/CD no GitHub Actions.
+- **Próximas etapas planejadas**:
+  1. Módulo de **Ciência de Dados** (issues `#48`, `#49`, `#50` — ETL, tratamento estatístico e séries avançadas).
+  2. Provisionamento manual na **AWS** (S3/CloudFront HTTPS + EC2 + Amazon RDS PostgreSQL 17 com migrações Flyway).
+  3. Envio de e-mail SMTP/SES para recuperação de senha institucional.

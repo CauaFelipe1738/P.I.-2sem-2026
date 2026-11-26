@@ -232,7 +232,7 @@ public class IndicadoresService {
         return new RelatorioAcademicoDTO(indicadores, freqs, notas, comentarios, Instant.now());
     }
 
-    public MeuDesempenhoDTO obterMeuDesempenho(AuthenticatedUser user) {
+    public MeuDesempenhoDTO obterMeuDesempenho(AuthenticatedUser user, Long disciplinaTurmaId) {
         if (user == null || !"Aluno".equalsIgnoreCase(user.cargo())) {
             throw new DomainRuleException("Acesso restrito", "Esta rota é exclusiva para o perfil Aluno.");
         }
@@ -255,19 +255,36 @@ public class IndicadoresService {
             })
             .toList();
 
-        List<Frequencia> rawFreqs = frequenciaRepository.findByAlunoId(alunoId);
+        Map<Long, Aula> aulaMap = new HashMap<>();
+        aulaRepository.findAll().forEach(a -> aulaMap.put(a.getId(), a));
+
+        List<Frequencia> rawFreqs = frequenciaRepository.findByAlunoId(alunoId).stream()
+            .filter(f -> {
+                if (disciplinaTurmaId == null) return true;
+                Aula aula = aulaMap.get(f.getAulaId());
+                return aula != null && Objects.equals(aula.getDisciplinaTurmaId(), disciplinaTurmaId);
+            })
+            .toList();
         List<FrequenciaRelatorioDTO> freqs = rawFreqs.stream()
-            .map(f -> toFreqRelatorio(f, aulaRepository.findById(f.getAulaId()).orElse(null)))
+            .map(f -> toFreqRelatorio(f, aulaMap.get(f.getAulaId())))
             .toList();
 
-        List<AlunoAvaliacao> rawNotas = alunoAvaliacaoRepository.findByAlunoId(alunoId);
         Map<Long, Avaliacao> avMap = new HashMap<>();
         avaliacaoRepository.findAll().forEach(av -> avMap.put(av.getId(), av));
+
+        List<AlunoAvaliacao> rawNotas = alunoAvaliacaoRepository.findByAlunoId(alunoId).stream()
+            .filter(n -> {
+                if (disciplinaTurmaId == null) return true;
+                Avaliacao av = avMap.get(n.getAvaliacaoId());
+                return av != null && Objects.equals(av.getDisciplinaTurmaId(), disciplinaTurmaId);
+            })
+            .toList();
         List<NotaRelatorioDTO> notas = rawNotas.stream()
             .map(n -> toNotaRelatorio(n, avMap.get(n.getAvaliacaoId())))
             .toList();
 
         List<ComentarioDTO> comentariosVisiveis = comentarioRepository.findByAlunoIdAndVisivelAlunoTrue(alunoId).stream()
+            .filter(c -> disciplinaTurmaId == null || c.getDisciplinaTurmaId() == null || Objects.equals(c.getDisciplinaTurmaId(), disciplinaTurmaId))
             .map(comentarioService::toDTO)
             .toList();
 
@@ -335,6 +352,7 @@ public class IndicadoresService {
         return new FrequenciaRelatorioDTO(
             f.getId(),
             f.getAulaId(),
+            aula != null ? aula.getDisciplinaTurmaId() : null,
             f.getAlunoId(),
             alunoNome,
             f.getStatusPresenca(),
@@ -355,6 +373,7 @@ public class IndicadoresService {
         return new NotaRelatorioDTO(
             n.getId(),
             n.getAvaliacaoId(),
+            av != null ? av.getDisciplinaTurmaId() : null,
             n.getAlunoId(),
             alunoNome,
             av != null ? av.getNomeAvaliacao() : "",

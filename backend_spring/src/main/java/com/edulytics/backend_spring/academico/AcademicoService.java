@@ -164,8 +164,10 @@ public class AcademicoService {
         if (!turmaRepository.existsById(turmaId)) {
             throw new ResourceNotFoundException("Turma " + turmaId + " não encontrada.");
         }
-        Matricula.Status status = parseMatriculaStatus(statusStr != null && !statusStr.isBlank() ? statusStr : "ATIVA");
-        List<Matricula> mats = matriculaRepository.findByTurmaIdAndStatus(turmaId, status);
+        String rawStatus = statusStr != null && !statusStr.isBlank() ? statusStr.trim().toUpperCase(Locale.ROOT) : "ATIVA";
+        List<Matricula> mats = "TODOS".equals(rawStatus)
+            ? matriculaRepository.findByTurmaId(turmaId)
+            : matriculaRepository.findByTurmaIdAndStatus(turmaId, parseMatriculaStatus(rawStatus));
         List<AlunoTurmaDTO> out = new ArrayList<>();
         for (Matricula m : mats) {
             Aluno a = alunoRepository.findById(m.getAlunoId()).orElse(null);

@@ -103,6 +103,9 @@ test('HTTP real: fluxo docente completo (cursos, turmas, aulas, frequência 409,
   const realizada = await aulasService.realizarAula(aula.id, 'Integração HTTP Real concluída')
   assert.equal(realizada.status, 'REALIZADA')
 
+  const aulaEditada = await aulasService.updateAula(aula.id, { conteudo: 'Integração HTTP Editada' })
+  assert.equal(aulaEditada.conteudo, 'Integração HTTP Editada')
+
   await assert.rejects(
     () =>
       aulasService.saveFrequenciasEmLote(aula.id, [
@@ -118,6 +121,12 @@ test('HTTP real: fluxo docente completo (cursos, turmas, aulas, frequência 409,
   ])
   assert.equal(freq.length, 2)
 
+  const freqEditada = await aulasService.updateFrequencia(freq[1].id, {
+    statusPresenca: 'FALTA_JUSTIFICADA',
+    justificativa: 'Comprovante via HTTP',
+  })
+  assert.equal(freqEditada.presente, false)
+
   const av = await avaliacoesService.createAvaliacao({
     disciplinaTurmaId,
     periodoId: 1,
@@ -127,6 +136,19 @@ test('HTTP real: fluxo docente completo (cursos, turmas, aulas, frequência 409,
     valorTotal: 10,
     peso: 2,
   })
+
+  const avEditada = await avaliacoesService.updateAvaliacao(av.id, { nomeAvaliacao: 'Avaliação HTTP Editada' })
+  assert.equal(avEditada.nomeAvaliacao, 'Avaliação HTTP Editada')
+
+  const alunosTurmaTodos = await academicoService.listAlunosByTurma(turmaId, { status: 'TODOS' })
+  assert.ok(alunosTurmaTodos.length >= 1)
+  const matTarget = alunosTurmaTodos[alunosTurmaTodos.length - 1]
+  const trancada = await academicoService.updateMatriculaStatus(matTarget.matriculaId, 'TRANCAR')
+  assert.equal(trancada.status, 'TRANCADA')
+  await assert.rejects(
+    () => academicoService.updateMatriculaStatus(matTarget.matriculaId, 'CONCLUIR'),
+    (err) => err.status === 422,
+  )
 
   await assert.rejects(
     () => avaliacoesService.upsertNotaAluno(av.id, 1, { nota: 12 }),
