@@ -59,9 +59,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers("/actuator/metrics/**").hasRole("PROFESSOR")
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/v1/alunos/**", "/api/v1/turmas/*/alunos", "/api/v1/matriculas/**").hasRole("PROFESSOR")
+                .requestMatchers("/api/v1/alunos/**", "/api/v1/turmas/*/alunos", "/api/v1/matriculas/**", "/api/v1/auditoria/**").hasRole("PROFESSOR")
                 .requestMatchers("/api/v1/indicadores/**", "/api/v1/relatorios/**", "/api/v1/planos-acompanhamento/**").hasRole("PROFESSOR")
                 .requestMatchers(HttpMethod.POST, "/api/v1/aulas/**", "/api/v1/avaliacoes/**", "/api/v1/comentarios/**").hasRole("PROFESSOR")
                 .requestMatchers(HttpMethod.PUT, "/api/v1/aulas/**", "/api/v1/frequencias/**", "/api/v1/avaliacoes/**", "/api/v1/comentarios/**").hasRole("PROFESSOR")

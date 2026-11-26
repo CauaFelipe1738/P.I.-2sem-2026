@@ -2,7 +2,6 @@ package com.edulytics.backend_spring.alunos;
 
 import com.edulytics.backend_spring.alunos.dto.AlunoResponseDTO;
 import com.edulytics.backend_spring.common.dto.PageResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +25,10 @@ public class AlunoController {
     @PreAuthorize("hasRole('PROFESSOR')")
     public ResponseEntity<PageResponse<AlunoResponseDTO>> findAll(
         @RequestParam(required = false) String q,
+        @RequestParam(required = false) Long turmaId,
+        @RequestParam(required = false) Long cursoId,
         @PageableDefault(size = 20, sort = "nomeCompleto") Pageable pageable
     ) {
-        Page<AlunoResponseDTO> page = alunoService.listarTodos(q, pageable).map(AlunoResponseDTO::from);
-        return ResponseEntity.ok(PageResponse.from(page));
+        return ResponseEntity.ok(alunoService.listarFiltrado(q, turmaId, cursoId, pageable));
     }
 }

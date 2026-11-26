@@ -58,7 +58,10 @@ public class IndicadoresController {
 
     @GetMapping("/me/desempenho")
     @PreAuthorize("hasRole('ALUNO')")
-    public ResponseEntity<MeuDesempenhoDTO> getMeuDesempenho(@AuthenticationPrincipal AuthenticatedUser user) {
-        return ResponseEntity.ok(indicadoresService.obterMeuDesempenho(user));
+    public ResponseEntity<MeuDesempenhoDTO> getMeuDesempenho(
+        @AuthenticationPrincipal AuthenticatedUser user,
+        @RequestParam(required = false) Long disciplinaTurmaId
+    ) {
+        return ResponseEntity.ok(indicadoresService.obterMeuDesempenho(user, disciplinaTurmaId));
     }
 }
