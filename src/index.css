@@ -39,7 +39,22 @@ button { cursor: pointer; }
 button:not(:disabled) { transition: transform 140ms ease, box-shadow 160ms ease, background-color 160ms ease; }
 button:not(:disabled):active { transform: translateY(1px); }
 button:disabled { cursor: not-allowed; }
-input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea { cursor: text; }
+:is(
+  input:not([type]),
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="time"],
+  input[type="week"],
+  textarea
+):not(:disabled):not([readonly]) { cursor: text; }
 input[type="checkbox"], input[type="radio"], select, summary { cursor: pointer; }
 svg, img { cursor: default; }
 button svg, button img, a svg, a img, summary svg, summary img, label.cursor-pointer svg, label.cursor-pointer img { cursor: pointer; }
