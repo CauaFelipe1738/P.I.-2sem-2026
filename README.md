@@ -137,11 +137,22 @@ erDiagram
    npm run dev
    ```
 
-4. **Execute testes, análise estática e build de produção**:
+4. **Execute o servidor HTTP local de contrato (opcional, para testar modo `http` sem JVM)**:
+   ```bash
+   npm run api:mock
+   ```
+
+5. **Execute testes unitários, integração HTTP real, quality gates DevOps, lint e build**:
    ```bash
    npm test
+   npm run test:devops
    npm run lint
    npm run build
+   ```
+
+6. **Ou execute toda a stack via Docker Compose (PostgreSQL + Backend + Frontend Nginx)**:
+   ```bash
+   docker compose up --build
    ```
 
 ---
@@ -150,6 +161,7 @@ erDiagram
 
 - **Relatório Acadêmico (Mini TCC ABNT)**: [`docs/MiniTCC_frontend2026.pdf`](./docs/MiniTCC_frontend2026.pdf)
 - **Documentação Técnica do Frontend e Integrações**: [`DOCUMENTACAO_TECNICA.md`](./DOCUMENTACAO_TECNICA.md)
+- **Integração HTTP, Testes e Esteira DevOps/CI**: [`docs/DEVOPS_INTEGRACAO.md`](./docs/DEVOPS_INTEGRACAO.md)
 - **Planejamento Arquitetural Completo (Banco, Backend, Frontend)**: [`docs/plano/`](./docs/plano/00-visao-geral.md)
 - **Deploy Estático em Nuvem (Amazon S3)**: [`docs/frontend-s3.md`](./docs/frontend-s3.md)
 

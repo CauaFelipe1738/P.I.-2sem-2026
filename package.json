@@ -7,6 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "api:mock": "node scripts/mock-http-server.mjs",
+    "test:unit": "node --test tests/academicMetrics.test.js tests/apiClient.test.js",
+    "test:integration": "node --test tests/servicesIntegration.test.js tests/httpContractIntegration.test.js",
+    "test:devops": "node --test tests/devops.test.js",
     "test": "node --test tests/*.test.js",
     "preview": "vite preview"
   },

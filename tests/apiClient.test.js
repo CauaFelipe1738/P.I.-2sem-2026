@@ -4,6 +4,7 @@ import {
   ApiError,
   getApiMode,
   request,
+  requestRoot,
   setRuntimeTransport,
   setStoredToken,
 } from '../src/services/apiClient.js'
@@ -82,4 +83,34 @@ test('apiClient converte RFC 7807 ProblemDetail em ApiError e dispara evento no 
   )
   assert.equal(unauthorizedCount, 1)
   assert.equal(getApiMode(), 'http')
+})
+
+test('apiClient rejeita com ApiError 408 em timeout e requestRoot chama rota sem prefixo /api/v1', async () => {
+  setRuntimeTransport('http')
+  let rootUrl = ''
+  globalThis.fetch = async (url, init) => {
+    rootUrl = url
+    if (url.endsWith('/actuator/health')) {
+      return new Response(JSON.stringify({ status: 'UP' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    }
+    return new Promise((_, reject) => {
+      init.signal.addEventListener('abort', () => {
+        const abortErr = new Error('Aborted')
+        abortErr.name = 'AbortError'
+        reject(abortErr)
+      })
+    })
+  }
+
+  const health = await requestRoot('/actuator/health')
+  assert.equal(rootUrl, '/actuator/health')
+  assert.equal(health.status, 'UP')
+
+  await assert.rejects(
+    () => request('/lento', { timeoutMs: 25 }),
+    (err) => err instanceof ApiError && err.status === 408,
+  )
 })
