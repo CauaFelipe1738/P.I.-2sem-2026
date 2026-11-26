@@ -146,7 +146,7 @@ function App() {
             <h1 className="text-3xl font-bold sm:text-[36px]">Como deseja continuar?</h1>
             <p className="mt-2 text-[15px] text-[#71819a]">Escolha seu perfil para acessar o ambiente da escola.</p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto grid w-full max-w-[780px] gap-5 sm:grid-cols-2">
             {perfis.map(({ nome, detalhe, imagem, destino }) => (
               <button key={nome} onClick={() => { setPerfil(nome); navegar(destino) }} className="group overflow-hidden rounded-2xl border border-[#d3e1f1] bg-white text-left shadow-[0_12px_35px_rgba(31,54,82,0.08)] transition hover:-translate-y-1 hover:border-[#8db7ef] hover:shadow-[0_18px_42px_rgba(31,84,145,0.14)] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#70a6ef]">
                 <img src={imagem} alt="" loading="lazy" decoding="async" className="h-52 w-full object-cover object-center" />
