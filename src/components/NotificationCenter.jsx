@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { alunos } from '../data/dadosAcademicos.js'
 import { deriveAcademicAlerts } from '../data/academicInsights.js'
 import { useAcademicData } from '../data/academicoStore.js'
+import { getStudentsForCourse, useCourseCatalog } from '../data/courseStore.js'
 
 const STORAGE_KEY = 'edulytics.notifications.read.v1'
 
@@ -16,12 +17,19 @@ function readIds() {
 
 export default function NotificationCenter({ onOpenStudent }) {
   const data = useAcademicData()
+  const courses = useCourseCatalog()
   const [open, setOpen] = useState(false)
   const [read, setRead] = useState(readIds)
   const entries = useMemo(() => {
-    const attendance = data.attendance.flatMap((session) => (session.students || []).map((student) => ({ ...student, date: session.date, courseId: session.courseId, sessionId: session.id })))
-    return deriveAcademicAlerts(alunos, attendance, data.learning)
-  }, [data.attendance, data.learning])
+    return courses.flatMap((course) => {
+      const attendance = data.attendance
+        .filter((session) => session.courseId === course.id)
+        .flatMap((session) => (session.students || []).map((student) => ({ ...student, date: session.date, courseId: session.courseId, sessionId: session.id })))
+      const learning = data.learning.filter((record) => record.courseId === course.id)
+      return deriveAcademicAlerts(getStudentsForCourse(course, alunos), attendance, learning)
+        .map((item) => ({ ...item, id: `${course.id}-${item.id}`, courseId: course.id, courseName: course.nome }))
+    })
+  }, [courses, data.attendance, data.learning])
   const unread = entries.filter((item) => !read.has(item.id))
 
   function saveRead(next) {

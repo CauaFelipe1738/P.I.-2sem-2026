@@ -31,6 +31,34 @@ a oferta da disciplina precisa ser identificada pelo próprio `id_disciplina_tur
 | `GET /api/v1/cursos/{cursoId}/turmas` | `TURMA` filtrada por `id_curso`: `id_turma`, `semestre`, `data_inicio`, `data_fim`, `nome_turma`, `turno`. | Autenticado |
 | `GET /api/v1/turmas/{turmaId}/disciplinas` | Ofertas `DISCIPLINA_TURMA` da turma, cada uma com `id_disciplina_turma` e os dados de `DISCIPLINA` (`id_disciplina`, `nome_disciplina`, `descricao`, `carga_horaria`). | Autenticado |
 
+### Dependência para criação e matrícula de cursos
+
+O gerenciamento de cursos do protótipo ainda não chama estes endpoints: o catálogo
+é salvo no `localStorage` do navegador. O backend Spring presente no repositório não
+tem controller nem entidade de curso; a única rota implementada é a listagem de
+alunos em `GET /alunos`. Portanto, nenhum endpoint foi utilizado pela interface.
+
+Para substituir a persistência local, implementar e documentar estes contratos sob
+`/api/v1`:
+
+| Método e rota | Uso proposto |
+|---|---|
+| `GET /api/v1/cursos` | Lista os cursos disponíveis. |
+| `POST /api/v1/cursos` | Cria curso com `nome`, `descricao` e `cargaHoraria`; retorna o identificador persistido. |
+| `GET /api/v1/cursos/{cursoId}` | Consulta detalhes do curso. |
+| `PUT /api/v1/cursos/{cursoId}` | Atualiza nome, descrição e carga horária. |
+| `DELETE /api/v1/cursos/{cursoId}` | Exclui o curso sem apagar alunos nem registros acadêmicos relacionados. |
+| `GET /api/v1/cursos/{cursoId}/alunos` | Consulta os alunos matriculados no curso. |
+| `POST /api/v1/cursos/{cursoId}/alunos` | Vincula um aluno existente, recebendo `alunoId`; rejeita vínculos duplicados. |
+| `DELETE /api/v1/cursos/{cursoId}/alunos/{alunoId}` | Remove somente o vínculo da matrícula. |
+
+O DER atual não liga `ALUNO` a `CURSO` (nem a `TURMA`). É necessário definir uma
+entidade/tabela de matrícula, com chaves estrangeiras para curso e aluno e uma
+restrição única por par, antes de oferecer essa associação no backend. A interface
+deve trocar o armazenamento local por estes contratos somente quando estiverem
+implementados e disponíveis; não fazer fallback silencioso que pareça sincronização
+institucional.
+
 Exemplo de item retornado pela última rota: `{ "disciplinaTurmaId": 25,
 "turmaId": 10, "disciplina": { "disciplinaId": 7,
 "nomeDisciplina": "Programação" } }`. Esses nomes JSON correspondem às chaves

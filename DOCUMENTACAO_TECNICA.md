@@ -166,3 +166,9 @@ externo obrigatório configurado no repositório.
 - A evolução do protótipo pode incluir backend autenticado, banco de dados,
   autorização por perfil, validação institucional das regras de negócio e testes de
   componentes e integração.
+
+## Gerenciamento local de cursos
+
+A área Cursos permite criar, consultar, editar e excluir cursos, além de gerenciar os vínculos com os nomes disponíveis no catálogo demonstrativo de alunos. O estado reativo e a persistência no navegador ficam em `src/data/courseStore.js`; o catálogo inicial é derivado dos dados de exemplo em `dadosAcademicos.js`. Dashboard, frequência, aprendizagem, desempenho e notificações consultam o catálogo dinâmico. Remover um curso não apaga alunos nem chamadas e observações já registradas.
+
+Essas alterações existem somente no navegador atual, sem sincronização com o Spring ou entre dispositivos. O backend não possui CRUD de cursos nem entidade de matrícula; os contratos necessários estão descritos em `DOCUMENTACAO_BACKEND.md`.

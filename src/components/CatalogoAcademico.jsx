@@ -1,10 +1,11 @@
-import { cursos } from '../data/dadosAcademicos.js'
+import { useCourseCatalog } from '../data/courseStore.js'
 
 /**
  * Lista compacta de cursos usada no shell acadêmico.
  * A navegação é delegada ao chamador para manter o componente independente do roteamento.
  */
 export default function CatalogoAcademico({ onAbrirVisaoGeral = () => {} }) {
+  const cursos = useCourseCatalog()
   return (
     <div>
       <h2 className="text-xl font-bold">Cursos cadastrados</h2>
@@ -21,7 +22,7 @@ export default function CatalogoAcademico({ onAbrirVisaoGeral = () => {} }) {
           >
             <strong>{curso.nome}</strong>
             <span className="mt-1 block text-xs text-slate-600">
-              {curso.alunos} alunos · {curso.carga} · {curso.status}
+              {curso.studentIds.length} alunos · {curso.carga} · {curso.status}
             </span>
           </button>
         ))}

@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react'
-import { alunos, cursos } from '../data/dadosAcademicos.js'
+import { alunos } from '../data/dadosAcademicos.js'
+import { getStudentsForCourse, useCourseCatalog } from '../data/courseStore.js'
 import { deriveAcademicAlerts, isPresentStatus } from '../data/academicInsights.js'
 import { useAcademicData } from '../data/academicoStore.js'
 
@@ -128,6 +129,7 @@ function StudentProfile({ student, attendance, learning, onClose }) {
 
 export default function DashboardOverview({ course, onSelectCourse, onNavigate, studentToOpen, onStudentOpened }) {
   const data = useAcademicData()
+  const courses = useCourseCatalog()
   const [savedFilters] = useState(readDashboardFilters)
   const [className, setClassName] = useState(savedFilters.className)
   const [subject, setSubject] = useState(savedFilters.subject)
@@ -135,7 +137,7 @@ export default function DashboardOverview({ course, onSelectCourse, onNavigate, 
   const [view, setView] = useState(savedFilters.view)
   const [search, setSearch] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState('')
-  const students = useMemo(() => alunos.filter((student) => student.curso === course.nome), [course.nome])
+  const students = useMemo(() => getStudentsForCourse(course, alunos), [course])
   const rawAttendance = useMemo(() => data.attendance.filter((row) => row.courseId === course.id), [data.attendance, course.id])
   const rawLearning = useMemo(() => data.learning.filter((row) => row.courseId === course.id), [data.learning, course.id])
   const classes = useMemo(() => [...new Set(rawAttendance.map((row) => row.className).filter(Boolean))], [rawAttendance])
@@ -194,7 +196,7 @@ export default function DashboardOverview({ course, onSelectCourse, onNavigate, 
     <section className="rounded-xl border border-[#d9e1eb] bg-white p-4 shadow-[0_2px_5px_rgba(15,23,42,0.03)] sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">Monitoramento acadêmico</p><h2 className="mt-1 text-xl font-bold">Visão geral</h2><p className="mt-1 text-sm text-slate-600">Indicadores calculados a partir das chamadas e observações registradas.</p></div><div className="flex flex-wrap gap-2"><button onClick={() => onNavigate('frequencia', course)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Registrar frequência</button><button onClick={() => onNavigate('aprendizagem', course)} className="rounded-lg bg-[#2875df] px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">Nova observação</button></div></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="text-xs font-semibold text-slate-600">Curso<select className={`${inputClass} mt-1`} value={course.id} onChange={(event) => { onSelectCourse(cursos.find((item) => item.id === Number(event.target.value))); setClassName(''); setSubject('') }}>{cursos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+        <label className="text-xs font-semibold text-slate-600">Curso<select className={`${inputClass} mt-1`} value={course.id} onChange={(event) => { onSelectCourse(courses.find((item) => item.id === Number(event.target.value))); setClassName(''); setSubject('') }}>{courses.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
         <label className="text-xs font-semibold text-slate-600">Turma<select className={`${inputClass} mt-1`} value={activeClassName} onChange={(event) => setClassName(event.target.value)}><option value="">Todas</option>{classes.map((item) => <option key={item}>{item}</option>)}</select></label>
         <label className="text-xs font-semibold text-slate-600">Disciplina<select className={`${inputClass} mt-1`} value={activeSubject} onChange={(event) => setSubject(event.target.value)}><option value="">Todas</option>{subjects.map((item) => <option key={item}>{item}</option>)}</select></label>
         <label className="text-xs font-semibold text-slate-600">Período<select className={`${inputClass} mt-1`} value={period} onChange={(event) => setPeriod(event.target.value)}><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="365">Últimos 12 meses</option><option value="all">Todo o histórico</option></select></label>

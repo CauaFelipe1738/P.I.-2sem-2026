@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { alunos, cursos } from '../data/dadosAcademicos.js'
+import { alunos } from '../data/dadosAcademicos.js'
+import { getStudentsForCourse, useCourseCatalog } from '../data/courseStore.js'
 import { useAcademicData } from '../data/academicoStore.js'
 
 const input = 'mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm'
@@ -13,23 +14,23 @@ function MetricCard({ label, value }) {
   )
 }
 
-export default function Desempenho() {
+export default function Desempenho({ initialCourseId }) {
   const data = useAcademicData()
-  const [courseId, setCourseId] = useState(cursos[0].id)
+  const courses = useCourseCatalog()
+  const [courseId, setCourseId] = useState(initialCourseId ?? courses[0]?.id ?? '')
   const [studentId, setStudentId] = useState('')
   const [className, setClassName] = useState('')
   const [subject, setSubject] = useState('')
   const [period, setPeriod] = useState('')
-  const course = cursos.find((item) => item.id === Number(courseId))
-  const students = alunos.filter((item) => item.curso === course.nome)
+  const course = courses.find((item) => item.id === Number(courseId)) || courses[0]
+  const students = course ? getStudentsForCourse(course, alunos) : []
 
   // Os indicadores só usam registros existentes; notas não são estimadas pelo protótipo.
-  const sessions = useMemo(
-    () =>
-      data.attendance
+  const sessions = useMemo(() =>
+    data.attendance
         .filter(
           (row) =>
-            row.courseId === course.id &&
+            row.courseId === course?.id &&
             (!className || row.className === className) &&
             (!subject || row.subject === subject) &&
             (!period || row.date.startsWith(period)),
@@ -42,8 +43,9 @@ export default function Desempenho() {
             className: row.className,
           })),
         ),
-    [data.attendance, course.id, className, subject, period],
+    [data.attendance, course?.id, className, subject, period],
   )
+  if (!course) return <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center"><h3 className="font-bold text-slate-800">Nenhum curso cadastrado</h3><p className="mt-2 text-sm text-slate-600">Cadastre um curso na área de Cursos para visualizar indicadores.</p></div>
   const visibleSessions = sessions.filter(
     (row) => !studentId || row.studentId === studentId,
   )
@@ -161,7 +163,7 @@ export default function Desempenho() {
                 setSubject('')
               }}
             >
-              {cursos.map((item) => (
+              {courses.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.nome}
                 </option>

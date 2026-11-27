@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { alunos, cursos } from '../data/dadosAcademicos.js'
+import { alunos } from '../data/dadosAcademicos.js'
+import { getStudentsForCourse, useCourseCatalog } from '../data/courseStore.js'
 import {
   addLearning,
   checklistAprendizagem,
-  optionsForCourse,
   updateLearning,
   useAcademicData,
 } from '../data/academicoStore.js'
@@ -28,19 +28,21 @@ function SummaryCard({ label, value }) {
   )
 }
 
-export default function Aprendizagem({ initialCourseId = cursos[0].id }) {
+export default function Aprendizagem({ initialCourseId }) {
   const data = useAcademicData()
-  const [courseId, setCourseId] = useState(initialCourseId)
+  const courses = useCourseCatalog()
+  const [courseId, setCourseId] = useState(initialCourseId ?? courses[0]?.id ?? '')
   const [studentId, setStudentId] = useState('')
   const [subject, setSubject] = useState('')
   const [category, setCategory] = useState('Desenvolvimento de habilidade')
   const [editingId, setEditingId] = useState(null)
   const [planForm, setPlanForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
-  const course = cursos.find((item) => item.id === Number(courseId))
-  const students = optionsForCourse(course.nome, alunos)
+  const course = courses.find((item) => item.id === Number(courseId)) || courses[0]
+  if (!course) return <div className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center"><h3 className="font-bold text-slate-800">Nenhum curso cadastrado</h3><p className="mt-2 text-sm text-slate-600">Cadastre um curso na área de Cursos para registrar observações.</p></div>
+  const students = getStudentsForCourse(course, alunos)
   const subjects = [...new Set([course.nome, ...data.learning.filter((row) => row.courseId === course.id).map((row) => row.subject)])]
-  const teachers = [...new Set(cursos.map((item) => item.professor).filter(Boolean))]
+  const teachers = [...new Set(courses.map((item) => item.professor).filter(Boolean))]
 
   // Observações e planos compartilham a coleção para compor o histórico individual.
   const records = data.learning.filter(
@@ -167,7 +169,7 @@ export default function Aprendizagem({ initialCourseId = cursos[0].id }) {
                 setSubject('')
               }}
             >
-              {cursos.map((item) => (
+              {courses.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.nome}
                 </option>

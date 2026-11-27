@@ -13,7 +13,7 @@ import NotificationCenter from './components/NotificationCenter.jsx'
 import Aprendizagem from './components/aprendizagem.jsx'
 import Desempenho from './components/desempenho.jsx'
 import Frequencia from './components/frequencia.jsx'
-import { cursos as cursosAcademicos } from './data/dadosAcademicos.js'
+import { useCourseCatalog } from './data/courseStore.js'
 import './App.css'
 
 // As telas de entrada e perfil são carregadas sob demanda para reduzir o bundle inicial.
@@ -60,17 +60,19 @@ function Icon({ type, size = 20 }) {
 }
 
 function App() {
+  const cursosAcademicos = useCourseCatalog()
   // O estado da rota e o histórico são mantidos juntos para suportar voltar e avançar.
   const [paginaAtual, setPaginaAtual] = useState('login')
   const [perfil, setPerfil] = useState(null)
   const [menuAberto, setMenuAberto] = useState(false)
-  const [cursoSelecionado, setCursoSelecionado] = useState(cursosAcademicos[0])
+  const [cursoSelecionadoId, setCursoSelecionadoId] = useState(() => cursosAcademicos[0]?.id ?? null)
   const [ajudaAberta, setAjudaAberta] = useState(false)
   const [modoAjuda, setModoAjuda] = useState('center')
   const [tutorialNecessario, setTutorialNecessario] = useState(() => {
     try { return localStorage.getItem('edulytics.tutorial.seen.v1') !== 'true' } catch { return true }
   })
   const [studentToOpen, setStudentToOpen] = useState(null)
+  const cursoSelecionado = cursosAcademicos.find((curso) => curso.id === cursoSelecionadoId) || cursosAcademicos[0] || null
 
   useEffect(() => {
     // popstate é necessário porque o histórico não atualiza o estado React sozinho.
@@ -94,7 +96,7 @@ function App() {
   const navegar = useCallback((pagina, curso = cursoSelecionado) => {
     if (!rotasDaAplicacao.has(pagina) || pagina === paginaAtual) return
     if (pagina !== 'visao') setStudentToOpen(null)
-    setCursoSelecionado(curso)
+    setCursoSelecionadoId(curso?.id ?? null)
     window.history.pushState({ pagina }, '')
     setPaginaAtual(pagina)
   }, [cursoSelecionado, paginaAtual])
@@ -109,11 +111,11 @@ function App() {
   }, [])
 
   const abrirPerfilDoAlerta = useCallback((alerta) => {
-    const curso = cursosAcademicos.find((item) => item.nome === alerta.student.curso) || cursosAcademicos[0]
+    const curso = cursosAcademicos.find((item) => item.id === alerta.courseId) || cursosAcademicos.find((item) => item.nome === alerta.student.curso) || cursosAcademicos[0] || null
     setStudentToOpen({ studentId: alerta.student.id, requestId: `${Date.now()}-${Math.random()}` })
-    if (paginaAtual === 'visao') setCursoSelecionado(curso)
+    if (paginaAtual === 'visao') setCursoSelecionadoId(curso?.id ?? null)
     else navegar('visao', curso)
-  }, [navegar, paginaAtual])
+  }, [cursosAcademicos, navegar, paginaAtual])
 
   const limparEstudanteSelecionado = useCallback(() => setStudentToOpen(null), [])
 
@@ -227,18 +229,18 @@ function App() {
 
           return (
             <section className={`component-page rounded-2xl border p-5 shadow-sm sm:p-7 ${temaPagina}`}>
-              {Componente === Aprendizagem ? <Aprendizagem initialCourseId={cursoSelecionado.id} /> : Componente ? <Componente /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}
+              {Componente ? <Componente initialCourseId={cursoSelecionado?.id ?? cursosAcademicos[0]?.id} /> : <CatalogoAcademico onAbrirVisaoGeral={(curso) => navegar('visao', curso)} />}
             </section>
           )
         })()}
-        {paginaAtual === 'visao' && <DashboardOverview
+        {paginaAtual === 'visao' && (cursoSelecionado ? <DashboardOverview
           key={studentToOpen?.requestId || 'dashboard'}
           course={cursoSelecionado}
-          onSelectCourse={setCursoSelecionado}
+          onSelectCourse={(course) => setCursoSelecionadoId(course?.id ?? null)}
           onNavigate={navegar}
           studentToOpen={studentToOpen}
           onStudentOpened={limparEstudanteSelecionado}
-        />}
+        /> : <section className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-12 text-center"><h2 className="text-lg font-bold text-slate-800">Nenhum curso cadastrado</h2><p className="mt-2 text-sm text-slate-600">Abra a área de Cursos para cadastrar um curso e continuar.</p></section>)}
       </div>
 
       {(ajudaAberta || tutorialInicial) && <HelpCenter key={`${modoAjuda}-${tutorialInicial}`} open mode={tutorialInicial ? 'tutorial' : modoAjuda} page={paginaAtual} onClose={fecharAjuda} onNavigate={navegar} />}
