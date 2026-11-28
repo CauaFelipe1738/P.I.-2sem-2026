@@ -81,6 +81,15 @@ public class PlanoService {
         return dto;
     }
 
+    @Transactional
+    public void excluir(Long id) {
+        PlanoAcompanhamento plano = planoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Plano " + id + " não encontrado."));
+        PlanoDTO anterior = toDTO(plano);
+        planoRepository.delete(plano);
+        auditoriaService.registrar("plano_acompanhamento", "DELETE", anterior, null);
+    }
+
     private PlanoDTO toDTO(PlanoAcompanhamento p) {
         String alunoNome = alunoRepository.findById(p.getAlunoId()).map(Aluno::getNomeCompleto).orElse("");
         return new PlanoDTO(

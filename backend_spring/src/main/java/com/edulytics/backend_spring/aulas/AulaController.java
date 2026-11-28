@@ -49,6 +49,13 @@ public class AulaController {
         return ResponseEntity.ok(aulaService.atualizarAula(id, req));
     }
 
+    @DeleteMapping("/aulas/{id}")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        aulaService.excluirAula(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/aulas/{id}/realizar")
     @PreAuthorize("hasRole('PROFESSOR')")
     public ResponseEntity<AulaDTO> realizar(

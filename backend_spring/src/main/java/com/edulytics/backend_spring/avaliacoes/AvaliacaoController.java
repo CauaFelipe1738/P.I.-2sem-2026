@@ -49,6 +49,13 @@ public class AvaliacaoController {
         return ResponseEntity.ok(avaliacaoService.atualizar(id, req));
     }
 
+    @DeleteMapping("/avaliacoes/{id}")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        avaliacaoService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/avaliacoes/{id}/corrigir")
     @PreAuthorize("hasRole('PROFESSOR')")
     public ResponseEntity<AvaliacaoDTO> corrigir(@PathVariable Long id) {

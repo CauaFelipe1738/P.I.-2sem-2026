@@ -42,4 +42,10 @@ public class PlanoController {
     public ResponseEntity<PlanoDTO> atualizar(@PathVariable Long id, @RequestBody PlanoUpdateRequest req) {
         return ResponseEntity.ok(planoService.atualizar(id, req));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        planoService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -130,6 +130,15 @@ public class AulaService {
     }
 
     @Transactional
+    public void excluirAula(Long id) {
+        Aula aula = aulaRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Aula " + id + " não encontrada."));
+        AulaDTO anterior = toDTO(aula);
+        aulaRepository.delete(aula);
+        auditoriaService.registrar("aula", "DELETE", anterior, null);
+    }
+
+    @Transactional
     public AulaDTO realizarAula(Long id, String conteudo) {
         Aula aula = aulaRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Aula " + id + " não encontrada."));

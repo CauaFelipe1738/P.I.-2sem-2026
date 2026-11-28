@@ -48,4 +48,11 @@ public class ComentarioController {
     public ResponseEntity<ComentarioDTO> atualizar(@PathVariable Long id, @RequestBody ComentarioUpdateRequest req) {
         return ResponseEntity.ok(comentarioService.atualizar(id, req));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('PROFESSOR')")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        comentarioService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -1,6 +1,12 @@
 package com.edulytics.backend_spring.integration;
 
 import com.edulytics.backend_spring.auditoria.AuditoriaRepository;
+import com.edulytics.backend_spring.aulas.AulaRepository;
+import com.edulytics.backend_spring.avaliacoes.AlunoAvaliacaoRepository;
+import com.edulytics.backend_spring.avaliacoes.AvaliacaoRepository;
+import com.edulytics.backend_spring.comentarios.ComentarioRepository;
+import com.edulytics.backend_spring.frequencias.FrequenciaRepository;
+import com.edulytics.backend_spring.planos.PlanoRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -13,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +38,24 @@ class ApiIntegrationTest {
     @Autowired
     private AuditoriaRepository auditoriaRepository;
 
+    @Autowired
+    private AulaRepository aulaRepository;
+
+    @Autowired
+    private FrequenciaRepository frequenciaRepository;
+
+    @Autowired
+    private AvaliacaoRepository avaliacaoRepository;
+
+    @Autowired
+    private AlunoAvaliacaoRepository alunoAvaliacaoRepository;
+
+    @Autowired
+    private ComentarioRepository comentarioRepository;
+
+    @Autowired
+    private PlanoRepository planoRepository;
+
     private String login(String email, String senha) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -47,6 +72,85 @@ class ApiIntegrationTest {
         mockMvc.perform(get("/actuator/health"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    void excluirRecursosRemoveDependentesEExigePerfilProfessor() throws Exception {
+        String profToken = login("ana@exemplo.com", "123456");
+        String alunoToken = login("carla@exemplo.com", "123456");
+
+        MvcResult aulaResult = mockMvc.perform(post("/api/v1/aulas")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"disciplinaTurmaId\":1,\"dataAula\":\"2026-06-15\",\"horarioInicio\":\"19:00\",\"horarioFim\":\"20:00\",\"conteudo\":\"Aula para excluir\"}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+        long aulaId = objectMapper.readTree(aulaResult.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(post("/api/v1/aulas/" + aulaId + "/frequencias")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"itens\":[{\"alunoId\":1,\"statusPresenca\":\"PRESENTE\"}]}"))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(delete("/api/v1/aulas/" + aulaId)
+                .header("Authorization", "Bearer " + alunoToken))
+            .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/api/v1/aulas/" + aulaId)
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isNoContent());
+        assertFalse(aulaRepository.existsById(aulaId));
+        assertTrue(frequenciaRepository.findByAulaId(aulaId).isEmpty());
+        mockMvc.perform(delete("/api/v1/aulas/" + aulaId)
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isNotFound());
+
+        MvcResult avaliacaoResult = mockMvc.perform(post("/api/v1/avaliacoes")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"disciplinaTurmaId\":1,\"periodoId\":1,\"nomeAvaliacao\":\"Avaliação para excluir\",\"tipoAvaliacao\":\"PROVA\",\"dataAvaliacao\":\"2026-06-20\",\"valorTotal\":10,\"peso\":1}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+        long avaliacaoId = objectMapper.readTree(avaliacaoResult.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(put("/api/v1/avaliacoes/" + avaliacaoId + "/notas/1")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nota\":8}"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/v1/avaliacoes/" + avaliacaoId)
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isNoContent());
+        assertFalse(avaliacaoRepository.existsById(avaliacaoId));
+        assertTrue(alunoAvaliacaoRepository.findByAvaliacaoId(avaliacaoId).isEmpty());
+
+        MvcResult comentarioResult = mockMvc.perform(post("/api/v1/comentarios")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"alunoId\":1,\"disciplinaTurmaId\":1,\"titulo\":\"Comentário para excluir\",\"tipo\":\"DESEMPENHO\",\"classificacao\":\"POSITIVO\",\"descricao\":\"Teste de exclusão\"}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+        long comentarioId = objectMapper.readTree(comentarioResult.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(delete("/api/v1/comentarios/" + comentarioId)
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isNoContent());
+        assertFalse(comentarioRepository.existsById(comentarioId));
+
+        MvcResult planoResult = mockMvc.perform(post("/api/v1/planos-acompanhamento")
+                .header("Authorization", "Bearer " + profToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"alunoId\":1,\"disciplinaTurmaId\":1,\"dificuldade\":\"Dificuldade teste\",\"objetivo\":\"Objetivo teste\",\"acaoProposta\":\"Ação teste\",\"dataInicio\":\"2026-06-10\",\"prazo\":\"2026-07-10\",\"status\":\"EM_ACOMPANHAMENTO\"}"))
+            .andExpect(status().isCreated())
+            .andReturn();
+        long planoId = objectMapper.readTree(planoResult.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(delete("/api/v1/planos-acompanhamento/" + planoId)
+                .header("Authorization", "Bearer " + profToken))
+            .andExpect(status().isNoContent());
+        assertFalse(planoRepository.existsById(planoId));
     }
 
     @Test

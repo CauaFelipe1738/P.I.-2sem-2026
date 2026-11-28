@@ -111,6 +111,15 @@ public class AvaliacaoService {
     }
 
     @Transactional
+    public void excluir(Long id) {
+        Avaliacao avaliacao = avaliacaoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Avaliação " + id + " não encontrada."));
+        AvaliacaoDTO anterior = toDTO(avaliacao);
+        avaliacaoRepository.delete(avaliacao);
+        auditoriaService.registrar("avaliacao", "DELETE", anterior, null);
+    }
+
+    @Transactional
     public AvaliacaoDTO corrigir(Long id) {
         Avaliacao av = avaliacaoRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Avaliação " + id + " não encontrada."));

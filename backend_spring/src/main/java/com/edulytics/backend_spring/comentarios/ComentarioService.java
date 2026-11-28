@@ -127,6 +127,15 @@ public class ComentarioService {
         return dto;
     }
 
+    @Transactional
+    public void excluir(Long id) {
+        Comentario comentario = comentarioRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Comentário " + id + " não encontrado."));
+        ComentarioDTO anterior = toDTO(comentario);
+        comentarioRepository.delete(comentario);
+        auditoriaService.registrar("comentario", "DELETE", anterior, null);
+    }
+
     public ComentarioDTO toDTO(Comentario c) {
         String alunoNome = alunoRepository.findById(c.getAlunoId()).map(Aluno::getNomeCompleto).orElse("");
         String profNome = professorRepository.findById(c.getProfessorId()).map(Professor::getNomeCompleto).orElse("");

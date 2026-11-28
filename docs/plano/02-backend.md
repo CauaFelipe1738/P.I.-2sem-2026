@@ -84,6 +84,7 @@ backend_spring/src/main/
 | `GET` | `/api/v1/aulas` | Autenticado | Query: `disciplinaTurmaId?`, `professorId?`, `dataInicio?`, `dataFim?`, `status?`, `page`, `size` | `200`: `PageResponse<AulaDTO>` | `401` | `#79` |
 | `POST` | `/api/v1/aulas` | Professor | `{ disciplinaTurmaId, dataAula, horarioInicio, horarioFim, conteudo?, status? }` | `201`: `AulaDTO` (`professorId` da sessão) | `400`, `401`, `403`, `404`, `422` | `#80` |
 | `PUT` | `/api/v1/aulas/{id}` | Professor da aula | `{ dataAula, horarioInicio, horarioFim, conteudo, status }` | `200`: `AulaDTO` | `400`, `401`, `403`, `404`, `422` | `#81` |
+| `DELETE` | `/api/v1/aulas/{id}` | Professor | — | `204`: remove a aula e suas frequências | `401`, `403`, `404` | `[IMPLEMENTADO]` |
 | `PATCH` | `/api/v1/aulas/{id}/realizar` | Professor da aula | `{ conteudo? }` | `200`: `AulaDTO` (status → `REALIZADA`) | `401`, `403`, `404`, `422` | `[PROPOSTA]` (`#55` `AUL-001..007`) |
 | `PATCH` | `/api/v1/aulas/{id}/cancelar` | Professor da aula | — | `200`: `AulaDTO` (status → `CANCELADA`, preserva conteúdo) | `401`, `403`, `404`, `422` | `[PROPOSTA]` (`#55` `AUL-002..006`) |
 | `GET` | `/api/v1/aulas/{id}/frequencias` | Autenticado (Aluno só vê a própria) | Path `id` (`id_aula`) | `200`: `List<FrequenciaItemDTO>` | `401`, `403`, `404` | `#83` |
@@ -96,6 +97,7 @@ backend_spring/src/main/
 | `GET` | `/api/v1/avaliacoes` | Autenticado | Query: `disciplinaTurmaId?`, `professorId?`, `periodoId?`, `status?`, `page`, `size` | `200`: `PageResponse<AvaliacaoDTO>` | `401` | `#89` |
 | `POST` | `/api/v1/avaliacoes` | Professor | `{ disciplinaTurmaId, periodoId, nomeAvaliacao, tipoAvaliacao, descricao?, dataAvaliacao, valorTotal, peso, status? }` | `201`: `AvaliacaoDTO` | `400`, `401`, `403`, `404`, `422` | `#90` |
 | `PUT` | `/api/v1/avaliacoes/{id}` | Professor responsável | `{ nomeAvaliacao, tipoAvaliacao, descricao?, dataAvaliacao, valorTotal, peso, status }` | `200`: `AvaliacaoDTO` | `400`, `401`, `403`, `404`, `422` | `#91` |
+| `DELETE` | `/api/v1/avaliacoes/{id}` | Professor | — | `204`: remove a avaliação e suas notas | `401`, `403`, `404` | `[IMPLEMENTADO]` |
 | `PATCH` | `/api/v1/avaliacoes/{id}/corrigir` | Professor responsável | — | `200`: `AvaliacaoDTO` (status → `CORRIGIDA`) | `401`, `403`, `404`, `422` | `[PROPOSTA]` (`#55` `AVA-*`) |
 | `GET` | `/api/v1/avaliacoes/{id}/notas` | Autenticado (Aluno só vê a própria) | Path `id` (`id_avaliacao`) | `200`: `List<AlunoAvaliacaoDTO>` | `401`, `403`, `404` | `#92` |
 | `PUT` | `/api/v1/avaliacoes/{id}/notas/{alunoId}` | Professor responsável | `{ nota, observacao? }` (`0 <= nota <= valorTotal`) | `200`: `AlunoAvaliacaoDTO` | `400`, `401`, `403`, `404`, `422` | `#93` |
@@ -106,7 +108,9 @@ backend_spring/src/main/
 | `GET` | `/api/v1/comentarios` | Professor (ou Aluno apenas próprios + `visivelAluno=true` `[CONFIRMADO]`) | Query: `alunoId?`, `professorId?`, `disciplinaTurmaId?`, `tipo?`, `classificacao?`, `dataInicio?`, `dataFim?`, `page`, `size` | `200`: `PageResponse<ComentarioDTO>` | `401`, `403` | `#86` |
 | `POST` | `/api/v1/comentarios` | Professor | `{ alunoId, disciplinaTurmaId?, titulo, tipo, classificacao?, descricao, checklistItens?, acaoAcompanhamento?, visivelAluno? }` | `201`: `ComentarioDTO` | `400`, `401`, `403`, `404` | `#87` + `[CONFIRMADO]` |
 | `PUT` | `/api/v1/comentarios/{id}` | Professor autor | `{ titulo, tipo, classificacao?, descricao, checklistItens?, acaoAcompanhamento?, visivelAluno? }` | `200`: `ComentarioDTO` | `400`, `401`, `403`, `404` | `#88` + `[CONFIRMADO]` |
+| `DELETE` | `/api/v1/comentarios/{id}` | Professor | — | `204`: remove o comentário | `401`, `403`, `404` | `[IMPLEMENTADO]` |
 | `GET` / `POST` / `PUT` | `/api/v1/planos-acompanhamento` (`/{id}`) | Professor | `{ alunoId, disciplinaTurmaId?, dificuldade, objetivo, acaoProposta, dataInicio, prazo, status, resultado? }` | `200`/`201`: `PlanoDTO` | `400`, `401`, `403`, `404`, `422` | `[CONFIRMADO]` (`aprendizagem.jsx`) |
+| `DELETE` | `/api/v1/planos-acompanhamento/{id}` | Professor | — | `204`: remove o plano | `401`, `403`, `404` | `[IMPLEMENTADO]` |
 
 ### 2.6 Indicadores, Relatórios e Área do Aluno (`indicadores/`, `relatorios/`, `me/`)
 | Método | Rota | Acesso | Entrada | Saída | Erros | Origem |
